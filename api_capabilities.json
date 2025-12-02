@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-11-07T23:58:00Z",
+  "apis": {
+    "team_api": {
+      "file": "source/team_api.php",
+      "version": "1.1",
+      "lifecycle": "runtime",
+      "actions": [
+        "team/list",
+        "team/create",
+        "team/update",
+        "team/delete",
+        "team/get",
+        "member/add",
+        "member/remove",
+        "member/set_role",
+        "people_monitor_list",
+        "available_operators"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["team.manage"],
+      "idempotency_required": ["team/create", "member/add"],
+      "supports_pagination": true,
+      "supports_filtering": true,
+      "rate_limit": 100
+    },
+    "dag_token_api": {
+      "file": "source/dag_token_api.php",
+      "version": "1.2",
+      "lifecycle": "runtime",
+      "actions": [
+        "token/spawn",
+        "token/move",
+        "token/complete",
+        "token/scrap",
+        "token/status",
+        "token/list"
+      ],
+      "requires": ["auth", "tenant_scope", "idempotency_key"],
+      "permissions": ["dag.manage"],
+      "idempotency_required": ["token/spawn", "token/move"],
+      "supports_pagination": true,
+      "supports_filtering": false,
+      "rate_limit": 200
+    },
+    "assignment_api": {
+      "file": "source/assignment_api.php",
+      "version": "1.0",
+      "lifecycle": "runtime",
+      "actions": [
+        "assign_token",
+        "bulk_assign",
+        "unassign_token"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["assignment.manage"],
+      "idempotency_required": ["assign_token", "bulk_assign"],
+      "supports_pagination": false,
+      "supports_filtering": false,
+      "rate_limit": 150
+    },
+    "assignment_plan_api": {
+      "file": "source/assignment_plan_api.php",
+      "version": "1.0",
+      "lifecycle": "runtime",
+      "actions": [
+        "plan/create",
+        "plan/update",
+        "plan/delete",
+        "plan/list",
+        "plan/get",
+        "plan/preview",
+        "plan_nodes_options",
+        "list_candidates"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["assignment.plan.manage"],
+      "idempotency_required": ["plan/create"],
+      "supports_pagination": true,
+      "supports_filtering": true,
+      "rate_limit": 100
+    },
+    "dag_routing_api": {
+      "file": "source/dag_routing_api.php",
+      "version": "1.0",
+      "lifecycle": "admin",
+      "actions": [
+        "graph/create",
+        "graph/update",
+        "graph/delete",
+        "graph/list",
+        "node/create",
+        "node/update",
+        "node/delete",
+        "edge/create",
+        "edge/delete"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["dag.routing.manage"],
+      "idempotency_required": [],
+      "supports_pagination": true,
+      "supports_filtering": true,
+      "rate_limit": 50
+    },
+    "pwa_scan_api": {
+      "file": "source/pwa_scan_api.php",
+      "version": "1.0",
+      "lifecycle": "runtime",
+      "actions": [
+        "scan/quick",
+        "scan/detail"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["pwa.scan"],
+      "idempotency_required": [],
+      "supports_pagination": false,
+      "supports_filtering": false,
+      "rate_limit": 300
+    }
+  }
+}
+

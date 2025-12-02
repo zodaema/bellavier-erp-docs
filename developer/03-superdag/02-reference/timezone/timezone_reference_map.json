@@ -1,0 +1,184 @@
+{
+  "canonical_timezone": {
+    "name": "Asia/Bangkok",
+    "iana": "Asia/Bangkok",
+    "offset_minutes": 420,
+    "offset_hours": 7,
+    "utc_offset": "+07:00",
+    "description": "Canonical timezone for all SuperDAG / ETA / SLA operations"
+  },
+  "backend_standard": {
+    "storage": "UTC",
+    "computation": "UTC",
+    "conversion": "UI layer only",
+    "helper": "BGERP\\Helper\\TimeHelper",
+    "constant": "BGERP_TIMEZONE"
+  },
+  "frontend_standard": {
+    "receive": "UTC",
+    "display": "tenant.timezone",
+    "send": "UTC (normalized)",
+    "helper": "GraphTimezone",
+    "module": "assets/javascripts/dag/modules/GraphTimezone.js"
+  },
+  "tenant_settings": {
+    "table": "tenants",
+    "fields": {
+      "timezone_name": {
+        "type": "VARCHAR(50)",
+        "format": "IANA",
+        "example": "Asia/Bangkok",
+        "required": true,
+        "status": "TODO - Not yet implemented"
+      },
+      "timezone_offset_minutes": {
+        "type": "INT",
+        "example": 420,
+        "required": true,
+        "status": "TODO - Not yet implemented"
+      }
+    }
+  },
+  "database_columns": {
+    "flow_token": {
+      "spawned_at": {
+        "type": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "start_at": {
+        "type": "DATETIME NULL",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "completed_at": {
+        "type": "DATETIME NULL",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      }
+    },
+    "token_event": {
+      "event_time": {
+        "type": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      }
+    },
+    "token_work_session": {
+      "started_at": {
+        "type": "DATETIME",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "paused_at": {
+        "type": "DATETIME NULL",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "resumed_at": {
+        "type": "DATETIME NULL",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "completed_at": {
+        "type": "DATETIME NULL",
+        "default": "NULL",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      }
+    },
+    "routing_graph": {
+      "created_at": {
+        "type": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      },
+      "updated_at": {
+        "type": "DATETIME",
+        "default": "CURRENT_TIMESTAMP",
+        "timezone": "system",
+        "target": "canonical",
+        "status": "NEED_FIX"
+      }
+    }
+  },
+  "migration_status": {
+    "task_20_2": {
+      "status": "COMPLETE",
+      "files": [
+        "source/BGERP/Helper/TimeHelper.php",
+        "assets/javascripts/dag/modules/GraphTimezone.js",
+        "source/BGERP/Dag/EtaEngine.php",
+        "assets/javascripts/dag/graph_sidebar.js"
+      ]
+    },
+    "task_20_2_1": {
+      "status": "COMPLETE",
+      "type": "AUDIT_ONLY",
+      "deliverables": [
+        "timezone_audit_report.md",
+        "timezone_reference_map.json",
+        "timezone_migration_plan.md"
+      ]
+    },
+    "task_20_2_2": {
+      "status": "PENDING",
+      "priority": "HIGH",
+      "target_files": [
+        "source/BGERP/Service/TokenLifecycleService.php",
+        "source/BGERP/Service/TokenWorkSessionService.php",
+        "source/dag_token_api.php"
+      ]
+    }
+  },
+  "helper_methods": {
+    "php": {
+      "now": "TimeHelper::now() → DateTimeImmutable in canonical timezone",
+      "parse": "TimeHelper::parse($string) → DateTimeImmutable in canonical timezone",
+      "toIso8601": "TimeHelper::toIso8601($dt) → ISO8601 string",
+      "toMysql": "TimeHelper::toMysql($dt) → MySQL DATETIME string",
+      "durationMs": "TimeHelper::durationMs($start, $end) → milliseconds"
+    },
+    "javascript": {
+      "normalize": "GraphTimezone.normalize($timestamp) → ISO8601 string",
+      "toLocal": "GraphTimezone.toLocal($timestamp) → Date object",
+      "fromLocal": "GraphTimezone.fromLocal($date) → ISO8601 string",
+      "now": "GraphTimezone.now() → ISO8601 string",
+      "format": "GraphTimezone.format($timestamp, $options) → formatted string"
+    }
+  },
+  "patterns_to_replace": {
+    "php": {
+      "strtotime": "TimeHelper::parse()",
+      "time()": "TimeHelper::now() then TimeHelper::timestamp()",
+      "date('Y-m-d H:i:s')": "TimeHelper::toMysql(TimeHelper::now())",
+      "date('c')": "TimeHelper::toIso8601(TimeHelper::now())",
+      "new DateTimeImmutable('now')": "TimeHelper::now()",
+      "NOW()": "TimeHelper::toMysql(TimeHelper::now()) in prepared statements"
+    },
+    "javascript": {
+      "new Date()": "GraphTimezone.toLocal(GraphTimezone.now())",
+      "new Date($string)": "GraphTimezone.toLocal($string)",
+      "date.toISOString()": "GraphTimezone.normalize($date)",
+      "Date.parse($string)": "GraphTimezone.toLocal($string)"
+    }
+  }
+}
+

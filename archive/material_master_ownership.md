@@ -1,0 +1,397 @@
+# Master Data Ownership Definition
+
+**Generated:** December 2025  
+**Purpose:** Define source of truth and ownership model for Material Pipeline master data  
+**Task:** Task 13.15 — Schema Mapping & Material Pipeline Blueprint
+
+---
+
+## Overview
+
+This document defines the **source of truth** and **ownership model** for material master data in the Material Pipeline. It answers critical questions about data consistency, SKU generation, and master data management.
+
+---
+
+## Key Questions Answered
+
+### 1. SKU Source of Truth: Where is it?
+
+**Answer:** `stock_item.sku` is the **primary source of truth** for material SKU.
+
+**Rationale:**
+- `stock_item` is the newer, more comprehensive table
+- Used by GRN flow (`material_lot.id_stock_item` → `stock_item.id_stock_item`)
+- Contains additional fields (`material_type`, `grade`, `thickness_min/max`, etc.)
+- Better suited for inventory management
+
+**Legacy Support:**
+- `material.sku` is maintained for **legacy compatibility**
+- Used by legacy flows and older code
+- Should be kept in sync with `stock_item.sku` (same SKU value)
+
+**Current State:**
+- Both tables may have the same SKU values
+- No automatic synchronization mechanism exists
+- Manual sync required if both tables are used
+
+---
+
+### 2. Stock Item: What is its role?
+
+**Answer:** `stock_item` is the **inventory master** for all stock-kept items.
+
+**Purpose:**
+- Master catalog for all materials (leather, textile, hardware, etc.)
+- Tracks inventory quantities
+- Stores material attributes (type, grade, thickness, color, texture)
+- Links to unit of measure
+- Used by GRN flow (`material_lot` references `stock_item`)
+
+**Key Fields:**
+- `sku`: Unique stock item SKU (source of truth)
+- `material_type`: Material type (e.g., 'leather', 'textile', 'hardware')
+- `grade`: Quality grade (A, B, C, D)
+- `thickness_min/max`: Thickness range
+- `base_color`: Base color
+- `texture`: Texture description
+- `quantity`: Current inventory quantity
+- `unit_cost`: Standard unit cost
+- `last_cost`: Last purchase cost
+
+**Ownership:**
+- **Created by:** System (auto-creation during GRN) or Admin (manual creation)
+- **Updated by:** System (inventory updates) or Admin (master data updates)
+- **Read by:** All material-related flows (GRN, CUT, BOM, etc.)
+
+---
+
+### 3. Material: What is its role?
+
+**Answer:** `material` is the **legacy material master** maintained for backward compatibility.
+
+**Purpose:**
+- Legacy material catalog
+- Used by older flows and legacy code
+- Referenced by `leather_sheet.sku_material` (legacy FK)
+- Simpler structure than `stock_item`
+
+**Key Fields:**
+- `sku`: Material SKU (should match `stock_item.sku`)
+- `name`: Material name
+- `category`: Material category (e.g., 'Leather', 'Textile', 'Hardware')
+- `default_uom`: Default unit of measure
+- `is_active`: Active flag
+
+**Ownership:**
+- **Created by:** System (auto-creation for compatibility) or Admin (manual creation)
+- **Updated by:** System (sync with `stock_item`) or Admin (manual updates)
+- **Read by:** Legacy flows, `leather_sheet` (legacy FK)
+
+**Note:** This table should be **deprecated** in favor of `stock_item` in future versions.
+
+---
+
+### 4. Leather Sheet: What does it reference?
+
+**Answer:** `leather_sheet` references **both** `material` (legacy) and `material_lot` (new).
+
+**Current State:**
+- **Legacy FK:** `sku_material` → `material.sku` (legacy reference)
+- **New FK:** `id_lot` → `material_lot.id_material_lot` (GRN lot reference)
+
+**Rationale:**
+- Legacy FK maintained for backward compatibility
+- New FK added for GRN flow integration (Task 13.10)
+- Both FKs may exist simultaneously
+
+**Gap:**
+- `leather_sheet.sku_material` references `material.sku` but should reference `stock_item.sku` for consistency
+- No direct FK to `stock_item` (only indirect via `material_lot.id_stock_item`)
+
+**Ownership:**
+- **Created by:** System (auto-creation during Leather GRN flow)
+- **Updated by:** System (area updates during CUT operations)
+- **Read by:** CUT behavior, sheet selection, usage tracking
+
+---
+
+### 5. Who generates SKU? (System or User)
+
+**Answer:** **System generates SKU** (auto-generation) with optional user override.
+
+**SKU Generation Rules:**
+
+1. **Auto-Generation (Default)**
+   - System generates SKU based on material attributes:
+     - Format: `{MATERIAL_TYPE}-{ATTRIBUTE1}-{ATTRIBUTE2}-{SEQUENCE}`
+     - Example: `LEA-NAT-001`, `TXT-LIN-001`, `HDW-BUCK-001`
+   - Sequence number auto-increments per material type
+
+2. **User Override (Optional)**
+   - User can provide custom SKU during material creation
+   - System validates SKU uniqueness
+   - If duplicate, system rejects and prompts for new SKU
+
+3. **SKU Uniqueness**
+   - `stock_item.sku`: Unique constraint (`uniq_stock_item_sku`)
+   - `material.sku`: Unique constraint (`uniq_material_sku`)
+   - Both tables must have unique SKU values
+
+**Ownership:**
+- **Generated by:** System (auto-generation) or User (manual input)
+- **Validated by:** System (uniqueness check)
+- **Stored in:** `stock_item.sku` (primary) and `material.sku` (legacy, if needed)
+
+---
+
+## Master Data Ownership Model
+
+### 1. Stock Item (`stock_item`)
+
+**Owner:** Inventory/Procurement Team  
+**Source of Truth:** ✅ **YES** (Primary)
+
+**Responsibilities:**
+- Create/update stock item master data
+- Maintain material attributes (type, grade, thickness, color, texture)
+- Track inventory quantities
+- Manage unit costs
+
+**Creation Triggers:**
+- GRN flow (auto-creation if not exists)
+- Manual creation by admin
+- Import from external system
+
+**Update Triggers:**
+- Inventory transactions
+- Cost updates
+- Attribute changes
+
+---
+
+### 2. Material (`material`)
+
+**Owner:** System (Legacy Compatibility)  
+**Source of Truth:** ❌ **NO** (Legacy, maintained for compatibility)
+
+**Responsibilities:**
+- Maintain legacy material catalog
+- Sync with `stock_item` (if both used)
+- Support legacy flows
+
+**Creation Triggers:**
+- Auto-creation for legacy compatibility (if `stock_item` exists but `material` doesn't)
+- Manual creation by admin (rare)
+
+**Update Triggers:**
+- Sync with `stock_item` (if sync mechanism exists)
+- Manual updates by admin (rare)
+
+**Deprecation Plan:**
+- Phase out in future versions
+- Migrate all references to `stock_item`
+- Remove legacy FK from `leather_sheet`
+
+---
+
+### 3. Material Lot (`material_lot`)
+
+**Owner:** Warehouse/GRN Team  
+**Source of Truth:** ✅ **YES** (For lot/batch data)
+
+**Responsibilities:**
+- Create material lots during GRN
+- Track lot attributes (grade, area, weight, thickness)
+- Manage lot status and location
+
+**Creation Triggers:**
+- Leather GRN flow (Task 13.10)
+- Standard GRN flow (for other materials)
+
+**Update Triggers:**
+- Lot status changes
+- Location updates
+- Quantity adjustments
+
+**Dependencies:**
+- Requires `stock_item` to exist (FK: `id_stock_item` → `stock_item.id_stock_item`)
+
+---
+
+### 4. Leather Sheet (`leather_sheet`)
+
+**Owner:** Warehouse/GRN Team  
+**Source of Truth:** ✅ **YES** (For physical sheet inventory)
+
+**Responsibilities:**
+- Create physical sheet records during GRN
+- Track sheet area and remaining area
+- Update area during CUT operations
+- Manage sheet status
+
+**Creation Triggers:**
+- Leather GRN flow (Task 13.10)
+- Auto-creation per sheet during GRN
+
+**Update Triggers:**
+- CUT operations (area updates)
+- Sheet status changes (active → depleted → archived)
+
+**Dependencies:**
+- Requires `material` to exist (legacy FK: `sku_material` → `material.sku`)
+- Requires `material_lot` to exist (new FK: `id_lot` → `material_lot.id_material_lot`)
+
+---
+
+### 5. BOM Line (`bom_line`)
+
+**Owner:** Engineering/Product Team  
+**Source of Truth:** ✅ **YES** (For BOM structure)
+
+**Responsibilities:**
+- Define BOM structure (materials per product)
+- Maintain material SKU references (string, no FK)
+- Track quantities and waste percentages
+
+**Creation Triggers:**
+- BOM creation/editing
+- Product engineering changes
+
+**Update Triggers:**
+- BOM revisions
+- Material changes
+- Quantity adjustments
+
+**Dependencies:**
+- Requires `bom` to exist (FK: `id_bom` → `bom.id_bom`)
+- References `material_sku` (string, no FK constraint)
+
+**Gap:**
+- `material_sku` is a string without FK constraint
+- Should reference `stock_item.sku` or `material.sku` with FK constraint
+
+---
+
+## Data Consistency Rules
+
+### Rule 1: SKU Synchronization
+
+**If both `stock_item` and `material` exist for the same SKU:**
+- `stock_item.sku` = `material.sku` (must match)
+- `stock_item` is the source of truth
+- `material` should be kept in sync (manual or automated)
+
+**Enforcement:**
+- No automatic sync mechanism exists
+- Manual sync required if both tables are used
+- Future: Auto-sync or deprecate `material` table
+
+---
+
+### Rule 2: Material Lot Consistency
+
+**Material lot must reference valid stock item:**
+- `material_lot.id_stock_item` → `stock_item.id_stock_item` (FK enforced)
+- `material_lot.lot_code` must be unique per `id_stock_item`
+
+**Enforcement:**
+- FK constraint enforces referential integrity
+- Unique constraint enforces lot code uniqueness
+
+---
+
+### Rule 3: Leather Sheet Consistency
+
+**Leather sheet must reference valid material and lot:**
+- `leather_sheet.sku_material` → `material.sku` (legacy FK, enforced)
+- `leather_sheet.id_lot` → `material_lot.id_material_lot` (new FK, enforced)
+- `leather_sheet.sheet_code` must be unique
+
+**Enforcement:**
+- FK constraints enforce referential integrity
+- Unique constraint enforces sheet code uniqueness
+
+**Gap:**
+- `leather_sheet.sku_material` should reference `stock_item.sku` instead of `material.sku`
+
+---
+
+### Rule 4: BOM Line Consistency
+
+**BOM line must reference valid BOM:**
+- `bom_line.id_bom` → `bom.id_bom` (FK enforced)
+- `bom_line.material_sku` should match `stock_item.sku` or `material.sku` (no FK constraint)
+
+**Enforcement:**
+- FK constraint enforces BOM reference
+- No FK constraint for `material_sku` (string match only)
+
+**Gap:**
+- `bom_line.material_sku` should have FK constraint to `stock_item.sku` or `material.sku`
+
+---
+
+## Recommendations
+
+### 1. Consolidate Material Master
+
+**Action:** Use `stock_item` as the **single source of truth** for material SKU.
+
+**Steps:**
+1. Migrate all references from `material` to `stock_item`
+2. Update `leather_sheet.sku_material` to reference `stock_item.sku` (add FK)
+3. Deprecate `material` table (or keep for read-only legacy support)
+
+**Benefits:**
+- Single source of truth
+- Eliminates sync issues
+- Cleaner data model
+
+---
+
+### 2. Add FK Constraint to BOM Line
+
+**Action:** Add FK constraint to `bom_line.material_sku`.
+
+**Steps:**
+1. Add FK: `bom_line.material_sku` → `stock_item.sku`
+2. Validate existing data (ensure all `material_sku` values exist in `stock_item`)
+3. Add FK constraint
+
+**Benefits:**
+- Referential integrity
+- Prevents orphaned BOM lines
+- Better data validation
+
+---
+
+### 3. Remove Legacy FK from Leather Sheet
+
+**Action:** Remove `leather_sheet.sku_material` FK to `material` (keep only `id_lot` FK).
+
+**Steps:**
+1. Ensure all `leather_sheet` records have valid `id_lot`
+2. Remove `sku_material` column (or keep as nullable for legacy support)
+3. Update code to use `id_lot` → `material_lot` → `stock_item` path
+
+**Benefits:**
+- Cleaner data model
+- Single FK path
+- Eliminates legacy dependency
+
+---
+
+## Summary
+
+| Table | Source of Truth | Owner | Creation Trigger | Update Trigger |
+|-------|----------------|-------|------------------|----------------|
+| `stock_item` | ✅ **YES** (Primary) | Inventory/Procurement | GRN flow, Manual | Inventory, Cost updates |
+| `material` | ❌ **NO** (Legacy) | System (Compatibility) | Auto-sync, Manual | Sync with `stock_item` |
+| `material_lot` | ✅ **YES** (Lot data) | Warehouse/GRN | GRN flow | Status, Location updates |
+| `leather_sheet` | ✅ **YES** (Sheet data) | Warehouse/GRN | GRN flow | CUT operations, Status |
+| `bom_line` | ✅ **YES** (BOM structure) | Engineering/Product | BOM creation | BOM revisions |
+
+---
+
+**End of Master Data Ownership Definition**
+

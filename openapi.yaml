@@ -1,0 +1,439 @@
+openapi: 3.0.3
+info:
+  title: Bellavier Group ERP API
+  description: |
+    Multi-tenant Manufacturing & Atelier Management System
+    
+    ## Authentication
+    All endpoints require session-based authentication via `PHPSESSID` cookie.
+    
+    ## Multi-tenancy
+    Most endpoints automatically scope to the current organization based on session context.
+    
+    ## Response Format
+    Standard response format:
+    ```json
+    {
+      "ok": true|false,
+      "data": {}, 
+      "error": "error_code",
+      "message": "Human readable message"
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: Bellavier Group
+    url: https://bellaviergroup.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8888/bellavier-group-erp
+    description: Local Development
+  - url: https://erp.bellaviergroup.com
+    description: Production
+
+tags:
+  - name: Manufacturing
+    description: Manufacturing Orders (MO) operations
+  - name: Job Tickets
+    description: Atelier job ticket management
+  - name: WIP
+    description: Work-in-Progress logging
+  - name: QC
+    description: Quality Control & inspections
+  - name: Inventory
+    description: Stock management & transactions
+  - name: Admin
+    description: Administration & RBAC
+  - name: Platform
+    description: Platform-level operations
+
+paths:
+  # =========================================================================
+  # MANUFACTURING ORDERS
+  # =========================================================================
+  
+  /source/mo_api.php:
+    get:
+      tags: [Manufacturing]
+      summary: List or get Manufacturing Orders
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [list, detail]
+        - name: id_mo
+          in: query
+          schema:
+            type: integer
+          description: Required for action=detail
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  data:
+                    oneOf:
+                      - type: array
+                        items:
+                          $ref: '#/components/schemas/ManufacturingOrder'
+                      - $ref: '#/components/schemas/ManufacturingOrder'
+
+  # =========================================================================
+  # JOB TICKETS
+  # =========================================================================
+  
+  /source/atelier_job_api.php:
+    get:
+      tags: [Job Tickets]
+      summary: Get job tickets
+      parameters:
+        - name: action
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [list, detail, by_mo]
+        - name: id_job_ticket
+          in: query
+          schema:
+            type: integer
+        - name: id_mo
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    
+    post:
+      tags: [Job Tickets]
+      summary: Create or update job ticket
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [create, update, update_status]
+                id_job_ticket:
+                  type: integer
+                id_mo:
+                  type: integer
+                ticket_code:
+                  type: string
+                job_name:
+                  type: string
+                status:
+                  type: string
+                  enum: [planned, in-progress, qc, completed, cancelled]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # =========================================================================
+  # WIP LOGS
+  # =========================================================================
+  
+  /source/atelier_wip_api.php:
+    post:
+      tags: [WIP]
+      summary: Record WIP event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, id_job_ticket, event_type]
+              properties:
+                action:
+                  type: string
+                  enum: [record, list]
+                id_job_ticket:
+                  type: integer
+                event_type:
+                  type: string
+                  enum: [start, progress, qc_check, pause, resume, complete]
+                qty:
+                  type: integer
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # =========================================================================
+  # DASHBOARD
+  # =========================================================================
+  
+  /source/dashboard.php:
+    get:
+      tags: [Dashboard]
+      summary: Get dashboard data
+      parameters:
+        - name: chart_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - atelier_kpi
+              - monthly_orders
+              - order_status_distribution
+              - source_distribution
+              - daily_activity_logs
+              - atelier_ticket_snapshot
+        - name: filter_date
+          in: query
+          schema:
+            type: string
+            default: '1'
+            description: '1=30d, 2=7d, 3=month, 4=year, 5=custom'
+        - name: date_start
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_end
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [success, error]
+                  data:
+                    type: object
+                  chart_type:
+                    type: string
+
+  # =========================================================================
+  # ADMIN - RBAC
+  # =========================================================================
+  
+  /source/admin_rbac.php:
+    post:
+      tags: [Admin]
+      summary: Manage roles and permissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                action:
+                  type: string
+                  enum: [perms, save_perms, roles, add_role, add_perm]
+                id_group:
+                  type: integer
+                role_name:
+                  type: string
+                role_desc:
+                  type: string
+                perm_code:
+                  type: string
+                permissions:
+                  type: object
+                  additionalProperties:
+                    type: boolean
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # =========================================================================
+  # PRODUCTION SCHEDULE
+  # =========================================================================
+  
+  /source/atelier_schedule.php:
+    post:
+      tags: [Manufacturing]
+      summary: Production schedule operations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum:
+                    - event_list
+                    - update_event
+                    - capacity_data
+                    - calculate_duration
+                    - calculate_end_date
+                    - conflict_check
+                    - find_gaps
+                    - auto_arrange
+                id_mo:
+                  type: integer
+                scheduled_start_date:
+                  type: string
+                  format: date-time
+                scheduled_end_date:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+# =========================================================================
+# COMPONENTS
+# =========================================================================
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        data:
+          type: object
+        error:
+          type: string
+        message:
+          type: string
+    
+    ManufacturingOrder:
+      type: object
+      properties:
+        id_mo:
+          type: integer
+        mo_code:
+          type: string
+        id_product:
+          type: integer
+        sku:
+          type: string
+        product_name:
+          type: string
+        qty:
+          type: number
+        id_uom:
+          type: integer
+        status:
+          type: string
+          enum: [planned, in-progress, production, qc, completed, cancelled]
+        scheduled_start_date:
+          type: string
+          format: date-time
+        scheduled_end_date:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+    
+    JobTicket:
+      type: object
+      properties:
+        id_job_ticket:
+          type: integer
+        ticket_code:
+          type: string
+        id_mo:
+          type: integer
+        job_name:
+          type: string
+        target_qty:
+          type: integer
+        status:
+          type: string
+          enum: [planned, in-progress, qc, completed]
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+    
+    WIPLog:
+      type: object
+      properties:
+        id_wip_log:
+          type: integer
+        id_job_ticket:
+          type: integer
+        event_type:
+          type: string
+          enum: [start, progress, qc_check, pause, resume, complete]
+        event_time:
+          type: string
+          format: date-time
+        qty:
+          type: integer
+        notes:
+          type: string
+    
+    QCInspection:
+      type: object
+      properties:
+        id_inspection:
+          type: integer
+        entity_type:
+          type: string
+        entity_id:
+          type: integer
+        result:
+          type: string
+          enum: [pass, fail, pending]
+        inspected_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+
+  securitySchemes:
+    SessionAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+
+security:
+  - SessionAuth: []
+

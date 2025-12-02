@@ -1,0 +1,253 @@
+###
+# Hatthasilpa Component API - HTTP Examples
+#
+# Purpose: Manual testing examples for hatthasilpa_component_api.php
+# Related Task: task13.1.md (DAG Task 13.1 - Manual Validation)
+#
+# Usage:
+# 1. Replace {BASE_URL} with your actual base URL (e.g., http://localhost/bellavier-group-erp)
+# 2. Replace {JOB_TICKET_ID} with a valid job_ticket_id from your tenant DB
+# 3. Replace {COMPONENT_SERIAL} with actual component serial numbers
+# 4. Ensure you are logged in and have 'hatthasilpa.job.ticket' permission
+# 5. Ensure feature flag FF_HAT_COMPONENT_SERIAL_BINDING is enabled for your tenant
+#
+# Tools:
+# - VS Code REST Client extension
+# - Postman
+# - curl
+###
+
+@baseUrl = http://localhost/bellavier-group-erp
+@apiPath = /source/hatthasilpa_component_api.php
+@jobTicketId = 631
+@componentSerial = MA01-HAT-DIAG-20251201-00001-A7F3-X-BODY
+@finalPieceSerial = MA01-HAT-DIAG-20251201-00001-A7F3-X
+
+###
+# TC1: Basic bind with minimal fields
+# Expected: ok: true, id_binding > 0
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_serial": "TEST-COMP-001"
+}
+
+###
+# TC2: Bind with all optional fields
+# Expected: ok: true, all fields saved correctly
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_code": "BODY",
+  "component_serial": "{{componentSerial}}",
+  "final_piece_serial": "{{finalPieceSerial}}",
+  "id_component_token": 1234,
+  "id_final_token": 5678,
+  "bom_line_id": 10
+}
+
+###
+# TC3: Multi-bind on same job_ticket (BODY)
+# Expected: ok: true
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_code": "BODY",
+  "component_serial": "{{componentSerial}}"
+}
+
+###
+# TC3: Multi-bind on same job_ticket (LINING)
+# Expected: ok: true
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_code": "LINING",
+  "component_serial": "MA01-HAT-DIAG-20251201-00001-A7F3-X-LINING"
+}
+
+###
+# TC3: Multi-bind on same job_ticket (HARDWARE)
+# Expected: ok: true
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_code": "HARDWARE",
+  "component_serial": "MA01-HAT-DIAG-20251201-00001-A7F3-X-HARDWARE"
+}
+
+###
+# TC4: Feature flag disabled
+# Prerequisite: Disable FF_HAT_COMPONENT_SERIAL_BINDING for your tenant
+# Expected: ok: false, app_code: HAT_COMPONENT_403_FEATURE_DISABLED, HTTP 403
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_serial": "TEST-COMP-FLAG-DISABLED"
+}
+
+###
+# TC5: Validation fail - missing job_ticket_id
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "component_serial": "TEST-COMP-NO-JOB-ID"
+}
+
+###
+# TC5: Validation fail - empty component_serial
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_serial": ""
+}
+
+###
+# TC6: job_ticket not found
+# Expected: ok: false, app_code: HAT_COMPONENT_404_JOB_NOT_FOUND, HTTP 404
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": 99999,
+  "component_serial": "TEST-COMP-NOT-FOUND"
+}
+
+###
+# TC7: Unauthorized (not logged in)
+# Prerequisite: Clear session / use incognito mode
+# Expected: ok: false, app_code: AUTH_401_UNAUTHORIZED, HTTP 401
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_serial": "TEST-COMP-UNAUTHORIZED"
+}
+
+###
+# TC9: get_component_serials - No bindings yet
+# Expected: ok: true, component_serials: []
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id=999
+
+###
+# TC10: get_component_serials - With bindings
+# Prerequisite: Run TC1-TC3 first to create bindings
+# Expected: ok: true, component_serials: array with bindings, sorted by created_at ASC, id_binding ASC
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id={{jobTicketId}}
+
+###
+# Task 13.2: get_component_serials - With component_code filter
+# Expected: ok: true, component_serials: array filtered by component_code=BODY
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id={{jobTicketId}}&component_code=BODY
+
+###
+# Task 13.2: get_component_serials - With final_piece_serial filter
+# Expected: ok: true, component_serials: array filtered by final_piece_serial
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id={{jobTicketId}}&final_piece_serial={{finalPieceSerial}}
+
+###
+# Task 13.2: get_component_serials - With both filters
+# Expected: ok: true, component_serials: array filtered by both component_code and final_piece_serial (AND condition)
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id={{jobTicketId}}&component_code=BODY&final_piece_serial={{finalPieceSerial}}
+
+###
+# TC11: get_component_serials - Validation error (missing job_ticket_id)
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials
+
+###
+# TC11: get_component_serials - Validation error (job_ticket_id = 0)
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id=0
+
+###
+# TC11: get_component_serials - Validation error (job_ticket_id = negative)
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id=-1
+
+###
+# TC12: get_component_serials - Unauthorized (not logged in)
+# Prerequisite: Clear session / use incognito mode
+# Expected: ok: false, app_code: AUTH_401_UNAUTHORIZED, HTTP 401
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_serials&job_ticket_id={{jobTicketId}}
+
+###
+# Task 13.2: get_component_panel - Success with bindings
+# Prerequisite: Run TC1-TC3 first to create bindings
+# Expected: ok: true, data.job_ticket + data.component_serials array
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_panel&job_ticket_id={{jobTicketId}}
+
+###
+# Task 13.2: get_component_panel - Success with empty bindings
+# Expected: ok: true, data.job_ticket + data.component_serials: []
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_panel&job_ticket_id=999
+
+###
+# Task 13.2: get_component_panel - Validation error (missing job_ticket_id)
+# Expected: ok: false, app_code: HAT_COMPONENT_400_VALIDATION
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_panel
+
+###
+# Task 13.2: get_component_panel - Job not found
+# Expected: ok: false, app_code: HAT_COMPONENT_404_JOB_NOT_FOUND
+###
+GET {{baseUrl}}{{apiPath}}?action=get_component_panel&job_ticket_id=99999
+
+###
+# Additional: Test with invalid action
+# Expected: ok: false, app_code: HAT_COMPONENT_400_INVALID_ACTION
+###
+GET {{baseUrl}}{{apiPath}}?action=invalid_action
+
+###
+# Additional: Test with malformed JSON
+# Expected: ok: false, validation error
+###
+POST {{baseUrl}}{{apiPath}}?action=bind_component_serial
+Content-Type: application/json
+
+{
+  "job_ticket_id": {{jobTicketId}},
+  "component_serial": "TEST-COMP-MALFORMED"
+  // Missing closing brace intentionally
+

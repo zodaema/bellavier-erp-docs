@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Label Templates</title>
+<style>
+  :root { --fs: 10pt; --lh: 1.2; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Thai", sans-serif; }
+  .label { border: 1px dashed #999; margin: 8px; padding: 8px; width: 320px; }
+  .row { display:flex; justify-content:space-between; align-items:center; }
+  .qr { width:96px; height:96px; background:#eee; display:flex; align-items:center; justify-content:center; font-size:9px; }
+  .h { font-weight:700; font-size:12pt; }
+  .m { font-size:10pt; }
+  .s { font-size:9pt; opacity:.85; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .sep { height:1px; background:#ddd; margin:6px 0; }
+</style>
+</head>
+<body>
+
+<!-- WIP CARD -->
+<div class="label" id="tpl-wip-card">
+  <div class="row"><div class="h">WIP CARD</div><div class="s mono">{{date}}</div></div>
+  <div class="row">
+    <div>
+      <div class="m"><b>Ticket</b>: <span class="mono">{{ticket_code}}</span></div>
+      <div class="m"><b>Product</b>: {{sku}} — {{product_name}}</div>
+      <div class="m"><b>Color</b>: {{color}} &nbsp; <b>Batch</b>: {{batch}}</div>
+      <div class="m"><b>Route</b>: {{route_name}}</div>
+      <div class="s">Due: {{due_date}} • Qty: {{qty}}</div>
+    </div>
+    <div class="qr">{{QR_WIP_CARD}}</div>
+  </div>
+  <div class="sep"></div>
+  <div class="s">Notes: {{notes}}</div>
+</div>
+
+<!-- TRAY LABEL -->
+<div class="label" id="tpl-tray">
+  <div class="row"><div class="h">TRAY</div><div class="s mono">{{date}}</div></div>
+  <div class="m"><b>Station</b>: {{station}}</div>
+  <div class="m"><b>Tray</b>: <span class="mono">{{tray_code}}</span></div>
+  <div class="m"><b>MO</b>: <span class="mono">{{mo_code}}</span></div>
+  <div class="row"><div class="s">Handler: {{assignee}}</div><div class="qr">{{QR_TRAY}}</div></div>
+</div>
+
+<!-- FINISHED GOOD -->
+<div class="label" id="tpl-fg">
+  <div class="row"><div class="h">FINISHED GOOD</div><div class="s mono">{{date}}</div></div>
+  <div class="m"><b>Serial</b>: <span class="mono">{{serial}}</span></div>
+  <div class="m"><b>SKU</b>: {{sku}} • {{product_name}} • {{color}}</div>
+  <div class="row"><div class="s">QC: {{qc_grade}} / Inspector: {{inspector}}</div><div class="qr">{{QR_SERIAL}}</div></div>
+</div>
+
+<!-- SHIPPING -->
+<div class="label" id="tpl-ship">
+  <div class="row"><div class="h">SHIPPING</div><div class="s mono">{{date}}</div></div>
+  <div class="m"><b>To</b>: {{customer_name}} • {{addr_line}}</div>
+  <div class="m"><b>SO</b>: <span class="mono">{{so_code}}</span> • <b>Box</b>: {{box_no}}</div>
+  <div class="row"><div class="s">Carrier: {{carrier}} • Service: {{service}}</div><div class="qr">{{QR_SHIP}}</div></div>
+</div>
+
+</body>
+</html>
