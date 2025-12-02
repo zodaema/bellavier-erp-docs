@@ -1,7 +1,9 @@
-# Implementation Checklists
+# Implementation Checklists (07-checklists/)
 
 **Purpose:** แผนการทำงานและ Tracking Progress  
 **วัตถุประสงค์:** ให้รู้ว่า "ต้องทำอะไรบ้าง" และ "ลำดับไหน"
+
+**Location:** `docs/dag/07-checklists/`
 
 ---
 

@@ -1,7 +1,9 @@
-# Audit Reports
+# Audit Reports (00-audit/)
 
 **Purpose:** รายงานการตรวจสอบสถานะปัจจุบันของระบบ  
 **วัตถุประสงค์:** รู้ว่า "ทำไปแล้วอะไร, ยังขาดอะไร"
+
+**Location:** `docs/dag/00-audit/`
 
 ---
 

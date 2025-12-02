@@ -1,7 +1,9 @@
-# Concept Documents
+# Concept Documents (02-concepts/)
 
 **Purpose:** เอกสารแนวคิดและ Vision ของระบบ  
 **วัตถุประสงค์:** ให้เข้าใจ "ทำไม" และ "ภาพรวม" ก่อน implement
+
+**Location:** `docs/dag/02-concepts/`
 
 ---
 

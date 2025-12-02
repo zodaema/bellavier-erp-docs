@@ -16,25 +16,33 @@ docs/dag/
 ├── 02-implementation-status/      📊 Detailed Status (legacy)
 ├── 03-tasks/                      📋 Task Documentation
 │
-├── 10-audit/                      📊 AUDIT REPORTS (NEW)
+├── 00-audit/                      📊 AUDIT REPORTS (NEW)
 │   ├── README.md
 │   ├── DOCUMENT_CLASSIFICATION_INDEX.md
 │   ├── 20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md
 │   ├── 20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md
 │   └── 20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md
 │
-├── 11-concepts/                   🎯 CONCEPT DOCUMENTS (NEW)
+├── 01-core/                       🏗️ Core Architecture
+│
+├── 02-concepts/                   🎯 CONCEPT DOCUMENTS (NEW)
 │   ├── README.md
 │   ├── COMPONENT_PARALLEL_FLOW.md
 │   └── SUBGRAPH_MODULE_TEMPLATE.md
 │
-├── 12-specs/                      📐 TECHNICAL SPECS (NEW)
+├── 03-specs/                      📐 TECHNICAL SPECS (NEW)
 │   ├── README.md
 │   └── COMPONENT_PARALLEL_FLOW_SPEC.md
 │
-├── 13-checklists/                 ✅ IMPLEMENTATION CHECKLISTS (NEW)
+├── 04-tasks/                      📋 Tasks
+├── 05-implementation-status/      📊 Status
+├── 06-overview/                   📖 Overview
+│
+├── 07-checklists/                 ✅ IMPLEMENTATION CHECKLISTS (NEW)
 │   ├── README.md
 │   └── SUBGRAPH_MODULE_IMPLEMENTATION.md
+│
+└── 08-roadmap/                    🗺️ Roadmap
 │
 ├── README.md                      📚 Main Index
 ├── DOCUMENTATION_STRUCTURE.md     📖 Structure Guide

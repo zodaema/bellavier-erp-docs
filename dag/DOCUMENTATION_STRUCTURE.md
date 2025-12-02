@@ -107,7 +107,7 @@ docs/dag/
 
 ## Document Categories
 
-### 📊 Audit Reports (10-audit/)
+### 📊 Audit Reports (00-audit/)
 
 **Purpose:** ตรวจสอบสถานะปัจจุบัน
 
@@ -126,7 +126,7 @@ docs/dag/
 
 ---
 
-### 🎯 Concept Documents (11-concepts/)
+### 🎯 Concept Documents (02-concepts/)
 
 **Purpose:** แนวคิดและ Vision ของระบบ
 
@@ -151,7 +151,7 @@ docs/dag/
 
 ---
 
-### 📐 Technical Specs (12-specs/)
+### 📐 Technical Specs (03-specs/)
 
 **Purpose:** รายละเอียดทางเทคนิคสำหรับ Implementation
 
@@ -177,7 +177,7 @@ docs/dag/
 
 ---
 
-### ✅ Implementation Checklists (13-checklists/)
+### ✅ Implementation Checklists (07-checklists/)
 
 **Purpose:** แผนการทำงานและ Progress Tracking
 

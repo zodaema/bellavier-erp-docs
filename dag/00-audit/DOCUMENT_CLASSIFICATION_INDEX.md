@@ -460,13 +460,13 @@ Implementation (ทำตาม)
 
 | Document | Type | Purpose | Read When | Target Audience |
 |----------|------|---------|-----------|----------------|
-| `04-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` | 📊 Audit | สถานะปัจจุบัน Component | รู้สถานะ | Stakeholders, PM, Devs |
-| `04-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md` | 📊 Audit | สถานะปัจจุบัน Subgraph | รู้สถานะ Phase 5.8 | Stakeholders, Devs |
-| `04-audit/20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md` | 🔄 Hybrid | เปรียบเทียบ + NEW concept | เข้าใจความแตกต่าง | Architects, Devs |
-| `05-concepts/COMPONENT_PARALLEL_FLOW.md` | 🎯 Concept | Component Token vision | ก่อน implement | AI Agents, New Devs |
-| `05-concepts/SUBGRAPH_MODULE_TEMPLATE.md` | 🎯 Concept | NEW Subgraph vision | ก่อน implement | Architects, AI Agents |
-| `06-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` | 📐 Spec | Component implementation spec | ขณะ implement | Developers |
-| `developer/03-superdag/03-specs/BEHAVIOR_APP_CONTRACT.md` | 📐 Spec | Behavior API contract | implement Behavior | Developers |
+| `00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` | 📊 Audit | สถานะปัจจุบัน Component | รู้สถานะ | Stakeholders, PM, Devs |
+| `00-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md` | 📊 Audit | สถานะปัจจุบัน Subgraph | รู้สถานะ Phase 5.8 | Stakeholders, Devs |
+| `00-audit/20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md` | 🔄 Hybrid | เปรียบเทียบ + NEW concept | เข้าใจความแตกต่าง | Architects, Devs |
+| `02-concepts/COMPONENT_PARALLEL_FLOW.md` | 🎯 Concept | Component Token vision | ก่อน implement | AI Agents, New Devs |
+| `02-concepts/SUBGRAPH_MODULE_TEMPLATE.md` | 🎯 Concept | NEW Subgraph vision | ก่อน implement | Architects, AI Agents |
+| `03-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` | 📐 Spec | Component implementation spec | ขณะ implement | Developers |
+| `../developer/03-superdag/03-specs/BEHAVIOR_APP_CONTRACT.md` | 📐 Spec | Behavior API contract | implement Behavior | Developers |
 | `07-checklists/SUBGRAPH_MODULE_IMPLEMENTATION.md` | ✅ Checklist | Subgraph Module plan | implement Subgraph | Developers |
 
 ---

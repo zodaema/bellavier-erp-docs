@@ -1,7 +1,9 @@
-# Technical Specifications
+# Technical Specifications (03-specs/)
 
 **Purpose:** รายละเอียดทางเทคนิคสำหรับ Implementation  
 **วัตถุประสงค์:** ให้ Developers ใช้เป็น "Blueprint" ในการเขียน code
+
+**Location:** `docs/dag/03-specs/`
 
 ---
 

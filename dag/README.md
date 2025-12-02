@@ -9,15 +9,15 @@
 
 ```
 docs/dag/
-├── 00-overview/                   📖 Overview & Introduction
-├── 01-core/                       🏗️ Core Architecture
-├── 01-roadmap/                    🗺️ Implementation Roadmap
-├── 02-implementation-status/      📊 Detailed Implementation Status
-├── 03-tasks/                      📋 Task Documentation
-├── 10-audit/                      📊 Audit Reports (สถานะปัจจุบัน)
-├── 11-concepts/                   🎯 Concept Documents (แนวคิด Vision)
-├── 12-specs/                      📐 Technical Specifications (Blueprint)
-└── 13-checklists/                 ✅ Implementation Checklists (แผนการทำงาน)
+├── 00-audit/              📊 Audit Reports (สถานะปัจจุบัน)
+├── 01-core/               🏗️ Core Architecture
+├── 02-concepts/           🎯 Concept Documents (แนวคิด Vision)
+├── 03-specs/              📐 Technical Specifications (Blueprint)
+├── 04-tasks/              📋 Task Documentation
+├── 05-implementation-status/  📊 Detailed Implementation Status
+├── 06-overview/           📖 Overview & Introduction
+├── 07-checklists/         ✅ Implementation Checklists (แผนการทำงาน)
+└── 08-roadmap/            🗺️ Implementation Roadmap
 ```
 
 ---
@@ -38,40 +38,40 @@ docs/dag/
 ### 🔨 Ready to Implement?
 
 **Component Token:**
-1. Read `11-concepts/COMPONENT_PARALLEL_FLOW.md` (concept)
-2. Read `10-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` (status)
-3. Read `12-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` (technical spec)
+1. Read `02-concepts/COMPONENT_PARALLEL_FLOW.md` (concept)
+2. Read `00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` (status)
+3. Read `03-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` (technical spec)
 4. Follow Implementation Checklist (in spec, Section 12)
 
 **Subgraph Module:**
-1. Read `11-concepts/SUBGRAPH_MODULE_TEMPLATE.md` (concept)
-2. Read `10-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md` (status)
-3. Follow `13-checklists/SUBGRAPH_MODULE_IMPLEMENTATION.md`
+1. Read `02-concepts/SUBGRAPH_MODULE_TEMPLATE.md` (concept)
+2. Read `00-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md` (status)
+3. Follow `07-checklists/SUBGRAPH_MODULE_IMPLEMENTATION.md`
 
 ---
 
 ### 🔍 Looking for Specific Info?
 
 **"Component Token คืออะไร?"**
-→ `11-concepts/COMPONENT_PARALLEL_FLOW.md` (Section 1)
+→ `02-concepts/COMPONENT_PARALLEL_FLOW.md` (Section 1)
 
 **"Component Token ทำไปแล้วอะไรบ้าง?"**
-→ `10-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` (Executive Summary)
+→ `00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md` (Executive Summary)
 
 **"Component Token ต้อง implement อย่างไร?"**
-→ `12-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` (Section 12)
+→ `03-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` (Section 12)
 
 **"Subgraph กับ Component ต่างกันยังไง?"**
-→ `10-audit/20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md` (Section 11: Decision Tree)
+→ `00-audit/20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md` (Section 11: Decision Tree)
 
 **"Subgraph คืออะไร? (แนวคิดใหม่)"**
-→ `11-concepts/SUBGRAPH_MODULE_TEMPLATE.md` (Section 1-2)
+→ `02-concepts/SUBGRAPH_MODULE_TEMPLATE.md` (Section 1-2)
 
 ---
 
 ## Document Types
 
-### 📊 Audit Reports (`10-audit/`)
+### 📊 Audit Reports (`00-audit/`)
 
 **Purpose:** รายงานสถานะปัจจุบัน
 
@@ -83,7 +83,7 @@ docs/dag/
 
 ---
 
-### 🎯 Concept Documents (`11-concepts/`)
+### 🎯 Concept Documents (`02-concepts/`)
 
 **Purpose:** อธิบายแนวคิดและ Vision
 
@@ -97,7 +97,7 @@ docs/dag/
 
 ---
 
-### 📐 Technical Specs (`12-specs/`)
+### 📐 Technical Specs (`03-specs/`)
 
 **Purpose:** รายละเอียดทางเทคนิค (Schema, API, Validation)
 
@@ -113,7 +113,7 @@ docs/dag/
 
 ---
 
-### ✅ Implementation Checklists (`13-checklists/`)
+### ✅ Implementation Checklists (`07-checklists/`)
 
 **Purpose:** แผนการทำงานและ Progress Tracking
 
@@ -131,19 +131,19 @@ docs/dag/
 
 ```
 1. Concept (Vision)
-   ├─ 11-concepts/COMPONENT_PARALLEL_FLOW.md
-   └─ 11-concepts/SUBGRAPH_MODULE_TEMPLATE.md
+   ├─ 02-concepts/COMPONENT_PARALLEL_FLOW.md
+   └─ 02-concepts/SUBGRAPH_MODULE_TEMPLATE.md
          ↓
 2. Current Status (Audit)
-   ├─ 10-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md
-   └─ 10-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md
+   ├─ 00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md
+   └─ 00-audit/20251202_SUBGRAPH_GOVERNANCE_AUDIT_REPORT.md
          ↓
 3. Technical Details (Spec)
-   ├─ 12-specs/COMPONENT_PARALLEL_FLOW_SPEC.md
+   ├─ 03-specs/COMPONENT_PARALLEL_FLOW_SPEC.md
    └─ ../developer/03-superdag/03-specs/BEHAVIOR_APP_CONTRACT.md
          ↓
 4. Implementation (Checklist)
-   └─ 13-checklists/SUBGRAPH_MODULE_IMPLEMENTATION.md
+   └─ 07-checklists/SUBGRAPH_MODULE_IMPLEMENTATION.md
 ```
 
 ---
