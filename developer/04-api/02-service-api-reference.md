@@ -9,9 +9,9 @@
 
 ## 🎯 **Service Overview**
 
-**Total Services:** 47 services + 26 DAG engines + 6 MO services + 4 Component services + 1 Product service = 84 services/engines
+**Total Services:** 48 services + 26 DAG engines + 6 MO services + 4 Component services + 1 Product service = 85 services/engines
 
-**Core Services (9 services):**
+**Core Services (10 services):**
 
 | Service | Purpose | When to Use |
 |---------|---------|-------------|
@@ -21,6 +21,7 @@
 | ErrorHandler | Handle exceptions | Wrap risky operations |
 | DatabaseTransaction | Manage transactions | Multi-step operations |
 | SecureSerialGenerator | Generate secure serials | Job ticket creation (piece mode) |
+| PermissionEngine ⭐ (NEW Dec 9) | Token-level permissions | Work Queue action checks |
 | DAGValidationService ⭐ | Validate DAG graphs | Graph creation/editing |
 | DAGRoutingService ⭐ | Route tokens through DAG | Token movements |
 | TokenLifecycleService ⭐ | Manage token lifecycle | Spawn/move/complete tokens |
@@ -1457,21 +1458,178 @@ $service->scrapToken($tokenId, $reason, $operatorId, $operatorName);
 
 ---
 
+## 🔐 **PermissionEngine** (NEW Dec 9)
+
+**File:** `source/BGERP/Service/PermissionEngine.php`  
+**Namespace:** `BGERP\Service\PermissionEngine`
+
+### **Constructor:**
+
+```php
+$engine = new \BGERP\Service\PermissionEngine($tenantDb);
+```
+
+**Parameters:**
+- `$tenantDb` (mysqli) - Tenant database connection
+
+---
+
+### **canActOnToken()** - Main Permission Check
+
+```php
+$result = $engine->canActOnToken($token, $member, $action, $nodeConfig);
+```
+
+**Purpose:** Token-level permission check with 4-layer model
+
+**Parameters:**
+- `$token` (array) - Token data (id_token, assigned_to, assignment_method, etc.)
+- `$member` (array) - Current user data
+- `$action` (string) - Action type (start, pause, complete, qc_pass, qc_fail, etc.)
+- `$nodeConfig` (array) - Node configuration (allows_self_qc, requires_assignment, etc.)
+
+**Returns:** array
+```php
+[
+    'allowed' => bool,
+    'reason' => string,  // If not allowed, reason code
+    'layer' => string   // Which layer denied (role, assignment, node, token)
+]
+```
+
+**4-Layer Permission Model:**
+1. **Role Permission** - Base RBAC check (via PermissionHelper)
+2. **Assignment Method** - strict, auto, pin, help
+3. **Node Config** - QC self-pick, self-QC rules
+4. **Token Type** - replacement, rework, split tokens
+
+**Example:**
+```php
+$engine = new \BGERP\Service\PermissionEngine($tenantDb);
+$result = $engine->canActOnToken($token, $member, 'start', $nodeConfig);
+
+if (!$result['allowed']) {
+    json_error($result['reason'], 403, ['app_code' => $result['layer']]);
+}
+```
+
+---
+
+### **canStartToken()** - Start Permission
+
+```php
+$allowed = $engine->canStartToken($token, $member, $nodeConfig);
+```
+
+**Returns:** bool
+
+---
+
+### **canPauseToken()** - Pause Permission
+
+```php
+$allowed = $engine->canPauseToken($token, $member, $nodeConfig);
+```
+
+**Returns:** bool
+
+---
+
+### **canCompleteToken()** - Complete Permission
+
+```php
+$allowed = $engine->canCompleteToken($token, $member, $nodeConfig);
+```
+
+**Returns:** bool
+
+---
+
+### **canQCToken()** - QC Permission
+
+```php
+$allowed = $engine->canQCToken($token, $member, $nodeConfig);
+```
+
+**Purpose:** QC permission with self-QC rules
+- Unassigned tokens: Self-QC allowed
+- Assigned tokens: Only assigned user can QC
+
+**Returns:** bool
+
+---
+
+## 📦 **MaterialAllocationService** - Scrap Handling (NEW Dec 9)
+
+**File:** `source/BGERP/Service/MaterialAllocationService.php`  
+**Namespace:** `BGERP\Service\MaterialAllocationService`
+
+### **handleScrapMaterials()** - Handle Materials for Scrapped Token
+
+```php
+$result = $service->handleScrapMaterials($tokenId, $userId);
+```
+
+**Purpose:** Handle material return/waste when token is scrapped
+
+**Parameters:**
+- `$tokenId` (int) - Token ID
+- `$userId` (int) - User ID performing the scrap
+
+**Returns:** array
+```php
+[
+    'success' => bool,
+    'returned_count' => int,  // Materials returned to stock
+    'wasted_count' => int,     // Materials marked as waste
+    'message' => string        // Error message if failed
+]
+```
+
+**Business Rules:**
+- If `consumed_qty = 0`: Return all reserved materials to stock
+- If `consumed_qty > 0`: Mark consumed materials as waste, return unused to stock
+
+**Event Types Logged:**
+- `material_returned_scrap` - Materials returned to stock
+- `material_wasted_scrap` - Materials marked as waste
+
+**Example:**
+```php
+$materialService = new \BGERP\Service\MaterialAllocationService($tenantDb);
+$result = $materialService->handleScrapMaterials($tokenId, $userId);
+
+if ($result['success']) {
+    error_log(sprintf(
+        'Token %d: Materials handled - Returned: %d, Wasted: %d',
+        $tokenId,
+        $result['returned_count'],
+        $result['wasted_count']
+    ));
+} else {
+    error_log('Material handling failed: ' . $result['message']);
+}
+```
+
+---
+
 ## 📚 **Service File Locations**
 
 ```
-source/service/
+source/BGERP/Service/
 ├── OperatorSessionService.php (490 lines)
 ├── JobTicketStatusService.php (394 lines)
 ├── ValidationService.php (409 lines)
 ├── ErrorHandler.php (231 lines)
 ├── DatabaseTransaction.php (243 lines)
 ├── SecureSerialGenerator.php (272 lines)
-├── DAGValidationService.php (367 lines) ⭐ NEW
-├── DAGRoutingService.php (586 lines) ⭐ NEW
-└── TokenLifecycleService.php (542 lines) ⭐ NEW
+├── PermissionEngine.php (457 lines) ⭐ NEW Dec 9
+├── MaterialAllocationService.php (1304 lines) ⭐ (handleScrapMaterials added)
+├── DAGValidationService.php (367 lines) ⭐
+├── DAGRoutingService.php (586 lines) ⭐
+└── TokenLifecycleService.php (542 lines) ⭐
 
-Total: 9 services, 3534 lines of production-ready code
+Total: 11 core services, 5303+ lines of production-ready code
 ```
 
 ---

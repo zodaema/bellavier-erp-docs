@@ -465,7 +465,7 @@ These standards apply to every JS module in the system.
   ```javascript
   t('products.form.save', 'Save')
   ```
-- All API calls must use `fetchJson()`
+- All API calls must use `BG.api.request()` (from `assets/javascripts/global_script.js`)
 - No `alert()` / `confirm()` / `prompt()`
 - No inline handlers (`onclick=""` forbidden)
 - Always wrap modules with:
@@ -474,6 +474,36 @@ These standards apply to every JS module in the system.
   // Author: Bellavier Group Engineering
   // Updated: YYYY-MM-DD
   ```
+
+### Standard UI Helpers (Preferred)
+- Toasts:
+  - `BG.ui.toastSuccess(message, title?)`
+  - `BG.ui.toastError(message, title?)`
+  - `BG.ui.toastInfo(message, title?)`
+- Confirm dialog:
+  - `await BG.ui.confirmDialog({ title, text, icon, confirmButtonText, cancelButtonText })`
+
+### Standard API Client (Preferred)
+Use `BG.api.request()` for consistent behavior:
+- Auto `X-Correlation-Id`
+- Auto `X-CSRF-Token` for state-changing requests
+- Normalized error response `{ ok:false, error, app_code, meta }`
+- CSRF token caching + short retry
+
+**CSRF token source:** `source/security_api.php?action=csrf_token&scope={scope}`
+
+**Upload / FormData note:** For raw `$.ajax` uploads, fetch token first:
+```javascript
+const token = await BG.api.getCsrfToken('materials');
+return $.ajax({
+  url: 'source/materials.php',
+  type: 'POST',
+  data: formData,
+  processData: false,
+  contentType: false,
+  headers: { 'X-CSRF-Token': token }
+});
+```
 
 ---
 

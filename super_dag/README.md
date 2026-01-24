@@ -11,8 +11,9 @@
 docs/super_dag/
 ├── 00-audit/          📊 Audit Reports (สถานะปัจจุบัน)
 ├── 01-concepts/       🎯 Concept Documents (แนวคิด Vision)
-├── 02-specs/          📐 Technical Specifications (Blueprint)
+├── 06-specs/          📐 Technical Specifications (Blueprint)
 ├── 03-checklists/     ✅ Implementation Checklists (แผนการทำงาน)
+├── plans/             📋 Implementation Plans (how to implement)
 ├── tasks/             📋 Task Documentation (150+ tasks)
 ├── archive/           📦 Archived Documents
 └── tests/             🧪 Test Documentation
@@ -30,7 +31,7 @@ docs/super_dag/
    └─ 00-audit/ (ดูรายงานล่าสุด)
          ↓
 3. Read Technical Details (Spec)
-   └─ 02-specs/
+   └─ 06-specs/
          ↓
 4. Follow Implementation Plan (Checklist)
    └─ 03-checklists/
@@ -45,10 +46,10 @@ docs/super_dag/
 ### Component Parallel Flow
 1. **Concept:** `01-concepts/COMPONENT_PARALLEL_FLOW.md`
 2. **Audit:** `00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md`
-3. **Spec:** `02-specs/COMPONENT_PARALLEL_FLOW_SPEC.md` (v2.1)
+3. **Spec:** `06-specs/REFERENCE_SPECS.md` (Component Parallel Flow Spec v2.1)
 
 ### Token Lifecycle
-1. **Spec:** `02-specs/SUPERDAG_TOKEN_LIFECYCLE.md` (v1.0)
+1. **Spec:** `06-specs/REFERENCE_SPECS.md` (SuperDAG Token Lifecycle v1.0)
 
 ### Behavior Layer
 1. **Audit:** `00-audit/20251202_BEHAVIOR_LAYER_AUDIT_REPORT.md`
@@ -73,10 +74,12 @@ docs/super_dag/
 **Naming:** `TOPIC_NAME.md` (no date, single source of truth)  
 **Files:** 2 concepts (Component Flow, Subgraph Module)
 
-### 📐 02-specs/ - Technical Specifications
+### 📐 06-specs/ - Technical Specifications
 **Purpose:** Blueprint สำหรับ implement  
-**Naming:** `TOPIC_NAME_SPEC.md` (no date, single source of truth)  
-**Files:** 2 specs (Token Lifecycle, Component Flow)
+**Location:** `docs/super_dag/06-specs/`  
+**Files:** 
+- SuperDAG System Specs (REFERENCE_SPECS.md, PHASE_1_IMPLEMENTATION.md)
+- Material & QC Specs (MATERIAL_ARCHITECTURE_V2.md, MATERIAL_PRODUCTION_MASTER_SPEC.md, MATERIAL_REQUIREMENT_RESERVATION_SPEC.md, QC_POLICY_RULES.md)
 
 ### ✅ 03-checklists/ - Implementation Checklists
 **Purpose:** Track progress  

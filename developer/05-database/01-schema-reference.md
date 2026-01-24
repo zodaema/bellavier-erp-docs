@@ -652,6 +652,57 @@ CREATE TABLE routing_graph_feature_flag (
 
 ---
 
+### **routing_graph_version** (Graph Version Snapshots) ⭐ **(Task 28.4 - Updated)**
+
+**Purpose:** Immutable snapshots of published graph versions for versioning, audit, and rollback
+
+```sql
+CREATE TABLE routing_graph_version (
+    id_version INT PRIMARY KEY AUTO_INCREMENT,
+    id_graph INT NOT NULL COMMENT 'Parent graph (FK to routing_graph)',
+    version VARCHAR(20) NOT NULL COMMENT 'Version string (e.g., "1.0", "2.0")',
+    payload_json LONGTEXT NOT NULL COMMENT 'Full graph snapshot (JSON: graph, nodes, edges)',
+    metadata_json JSON NULL COMMENT 'Additional metadata (published_by, notes, etc.)',
+    config_json JSON NULL COMMENT 'Graph-level configuration (qc_policy, assignment rules, etc.) - Task 28.4',
+    published_at DATETIME NOT NULL COMMENT 'When this version was published',
+    published_by INT NULL COMMENT 'User who published (FK to account.id_member)',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    is_stable TINYINT(1) DEFAULT 1 COMMENT 'Is this version stable (for auto-selection)',
+    status VARCHAR(20) NULL DEFAULT NULL COMMENT 'Version status: published (active), retired (deprecated but viewable) - Task 28.4',
+    allow_new_jobs TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Allow creating new jobs with this version (1=enabled, 0=disabled) - Task 28.4',
+    
+    PRIMARY KEY (id_version),
+    UNIQUE KEY uniq_graph_version (id_graph, version),
+    INDEX idx_graph (id_graph),
+    INDEX idx_published (published_at),
+    INDEX idx_graph_stable_published (id_graph, is_stable, published_at),
+    INDEX idx_status (status) COMMENT 'Task 28.4 - For filtering Published/Retired versions',
+    INDEX idx_graph_status (id_graph, status) COMMENT 'Task 28.4 - Common query pattern',
+    INDEX idx_allow_new_jobs (allow_new_jobs) COMMENT 'Task 28.4 - Filter versions available for new jobs',
+    FOREIGN KEY (id_graph) REFERENCES routing_graph(id_graph) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Immutable snapshots of published graph versions';
+```
+
+**Key Fields (Task 28.4 Updates):**
+- `version`: Version string (VARCHAR) - kept for backward compatibility
+- `status`: Version-level status (`published` or `retired`) - NULL for backward compatibility
+- `allow_new_jobs`: Control whether new jobs can be created with this version (replaces `RUNTIME_ENABLED` flag)
+- `config_json`: Graph-level configuration (JSON)
+
+**Status Values:**
+- `published`: Active version (can be used for new jobs if `allow_new_jobs=1`)
+- `retired`: Deprecated version (viewable but not for new jobs)
+- `NULL`: Backward compatibility (treated as `published` if `published_at IS NOT NULL`)
+
+**Important Notes:**
+- **Immutable:** Once published, version snapshots should never be modified
+- **Backward Compatible:** Existing code using `version` (VARCHAR) continues to work
+- **Version Resolution:** Product bindings use `status='published'` versions only (Task 28.3)
+- **Migration:** Task 28.4 added `status`, `allow_new_jobs`, and `config_json` fields (additive approach)
+
+---
+
 ### **job_graph_instance** (Active Job Graph)
 
 **Purpose:** Live instance of a graph for a specific job

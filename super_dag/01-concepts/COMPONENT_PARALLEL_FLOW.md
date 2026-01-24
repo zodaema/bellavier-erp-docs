@@ -39,6 +39,56 @@ Read this FIRST before implementing any Component Token features.
 
 ---
 
+## 0.1 “Natural Flow” Clarification (ตรงกับสิ่งที่เกิดในโรงงานจริง)
+
+แนวคิด “ทำทีละชิ้นส่วน แล้วบางชิ้นไปต่อได้ก่อน” **ไม่ได้ทำโดยให้ Final Token (กระเป๋า 1 ใบ) วิ่งข้าม node ไปเอง**  
+แต่ทำโดย **แยกงานเป็น Component Tokens** ตั้งแต่จุด split:
+
+- **Final Token**: เป็นตัวแทน “กระเป๋า 1 ใบ” และมักจะ “รอ” อยู่ที่ split/assembly ตาม policy
+- **Component Token**: เป็นตัวแทน “ชิ้นส่วน” (เช่น STRAP/BODY/FLAP) และสามารถ:
+  - ไปทำ “ปอกบาง / ทาสีขอบ / QC ของชิ้นนั้น” ได้ทันที
+  - โดยไม่ต้องรอให้ชิ้นส่วนอื่นเสร็จ
+
+ดังนั้น “ไป node ถัดไปได้บางส่วน” = **Component Token ของชิ้นนั้นไปต่อ**  
+ไม่ใช่ “Final Token ไปต่อทั้งใบ”
+
+> ถ้าต้องการให้ Final Token ไปต่อทั้งใบทั้ง ๆ ที่ยังไม่ครบทุกชิ้นส่วนจริง ๆ  
+> นั่นเป็น “โมเดลใหม่” (node ต้องรองรับ `consumes_components` แบบ subset ต่อ node) และต้องกำหนดกติกาใหม่เพิ่ม (ยังไม่ใช่ baseline ของเอกสารนี้)
+
+---
+
+## 0.2 Current Reality vs Target (เพื่อกันเอกสารพา implement ผิด)
+
+เอกสารนี้มีทั้ง “ของที่ทำได้แล้ว” และ “ของที่เป็น TARGET” โปรดแยกให้ออก:
+
+### ✅ มีอยู่แล้ว (Current)
+- `flow_token.token_type` = `batch|piece|component`
+- `flow_token.parallel_group_id`, `flow_token.parallel_branch_key`
+- `flow_token.component_code` (SSOT ของ component identity เมื่อ `token_type='component'`)
+- `flow_token.metadata` (สำหรับ payload อื่น ๆ ที่ยังไม่มี column)
+- `routing_node.is_parallel_split`, `routing_node.is_merge_node`
+- `routing_node.parallel_merge_policy` + (`parallel_merge_timeout_seconds`, `parallel_merge_at_least_count`) = **SSOT ของ merge readiness**
+- `routing_node.merge_mode` (legacy/compat เท่านั้น — ไม่ควรใช้เป็น SSOT)
+
+### 📋 ยังเป็น TARGET (อย่าเขียน code อิงว่ามีแล้ว)
+- `routing_node.produces_component`, `routing_node.consumes_components` (ยังไม่มี column)
+- `flow_token.status = 'merged'` (status ปัจจุบันไม่มี enum นี้)
+- `merged_into_token_id`, `merged_component_tokens` เป็น “column จริง” (ยังไม่มี) → ให้มองเป็น **metadata target**
+
+**Rule of thumb:** ถ้ายังไม่มี column → เก็บใน `flow_token.metadata` พร้อมชื่อ key ที่นิ่ง และต้องระบุว่าเป็น temporary
+
+---
+
+## 0.3 SSOT Summary (Runtime Today)
+
+เพื่อให้ implement ถูกกับระบบจริง (ไม่หลงไปตามคำศัพท์ในเอกสารเก่า):
+
+- **Merge readiness SSOT**: `routing_node.parallel_merge_policy` (และ fields คู่กัน)
+- **Component identity SSOT** (token_type=component): `flow_token.component_code`
+- **Work Queue visibility SSOT (ชั่วคราว)**: rule ใน API (อย่าไปสร้าง config DB ใหม่ก่อน flow ชัด)
+
+---
+
 ## 1. Entity หลักในระบบ
 
 ### 1.1 Final Token (piece token)
@@ -300,23 +350,32 @@ Component Token #1 (BODY) enters BODY_MODULE:
 
 ### 5.1 ใน Work Queue
 
-**Work Queue แสดงรายการงานแบบ token:**
-- Final Token (บางกรณี)
-- Component Token (ส่วนใหญ่ใน phase parallel)
+**กฎกลาง (Ideal UX Law): Work Queue = Job-level first**
+
+เพื่อไม่ให้ UI รกและไม่ให้ช่างสับสน:
+- หน้าแรกของ Work Queue **ต้องแสดงเป็น Card ระดับ Job ใหญ่** (เช่น กระเป๋ารุ่น X • 10 ใบ • อยู่ node CUT)
+- งานย่อย (เช่น component_code = BODY/FLAP/STRAP) ต้องอยู่ใน **Modal/Detail** หลังคลิกเข้า Card
+- Token-level/Component-level details เป็น “implementation detail” ที่ใช้ใน runtime ได้ แต่ **ไม่ควรถูกเอามากางเป็น list บนหน้าแรก**
+
+> หมายเหตุ: ระบบปัจจุบันมี Job-level card แล้วใน mobile view (`work_queue.js` ใช้ `byJob` model) — แนวคิดนี้ยืนยันให้เป็น “กฎกลาง” ที่ทีม dev ยึดร่วมกัน
+
+**หน้าที่ของ Card (หน้าแรก):**
+- สรุปงานใหญ่ (job_ticket / product / due / current stage)
+- บอกสถานะภาพรวมแบบคนอ่านง่าย เช่น “BODY ส่งต่อแล้ว 10/10, FLAP ยัง 0/10”
+- เปิดทางให้กดเข้าไปทำงานจริงใน modal
 
 **Component Token แสดงอย่างน้อย:**
 - `component_code` (BODY / FLAP / STRAP)
 - `final_serial` หรือรหัสใบงาน (เพื่อรู้ว่าของ F001)
 - `parallel_group_id` (เพื่อรู้ว่าเป็นชุดเดียวกัน)
 
-**UI Example:**
+**UI Example (ภายใน Modal/Detail เท่านั้น):**
 ```
-Work Queue:
-  - Component Token: BODY (F001) [parallel_group: 100]
-  - Component Token: FLAP (F001) [parallel_group: 100]
-  - Component Token: STRAP (F001) [parallel_group: 100]
-  - Component Token: BODY (F002) [parallel_group: 101]
-  - Component Token: FLAP (F002) [parallel_group: 101]
+Job Card: "TOTE • 10 ใบ • CUT"
+  → Open Modal:
+     - BODY: required 10, cut_done 10, released 10, available 0
+     - FLAP: required 10, cut_done 0, released 0, available 0
+     - STRAP: required 10, cut_done 0, released 0, available 0
 ```
 
 ### 5.2 การทำงานของช่าง
@@ -414,9 +473,11 @@ dag_behavior_log:
    - **Re-activate Final Token** ของ F001 (`parent_token_id`)
      - `status = 'active'`
      - `current_node_id = assembly_node`
-   - **Component Tokens:**
-     - `status = 'merged'`
-     - `merged_into_token_id = id_final_token`
+   - **Component Tokens (Current Reality):**
+     - ให้ถือว่า component token “เสร็จ” โดยใช้ `status='completed'`
+     - ถ้าต้องบันทึกว่า “ถูก merge แล้ว” ให้เก็บใน `flow_token.metadata` (temporary) เช่น:
+       - `metadata.merge_state = 'merged'`
+       - `metadata.merged_into_token_id = <final_token_id>`
 
 **สำคัญ:**
 - ✅ **Assembly ไม่ได้ generate Final Serial ใหม่**
@@ -432,7 +493,10 @@ Component Tokens arrive at Assembly Node:
   → System checks: All components arrived? (consumes_components = ["BODY","FLAP","STRAP"])
   → Yes: Re-activate Final Token F001
     - Final Token F001: status='active', current_node_id=assembly_node
-    - Component Tokens: status='merged', merged_into_token_id=F001
+    - Component Tokens (CURRENT): status='completed' (หรือ status เดิมตาม lifecycle)
+    - Component Tokens (TARGET marker): ใช้ `flow_token.metadata` เช่น
+      - `metadata.merge_state = 'merged'`
+      - `metadata.merged_into_token_id = <final_token_id>`
 ```
 
 ### 7.2 ข้อมูลที่ Merge เข้า Final Token
@@ -449,21 +513,21 @@ Component Tokens arrive at Assembly Node:
 - QC status component ไหนผ่าน/ไม่ผ่าน → `component_qc_status`
 - รายชื่อ id component token → `merged_component_tokens`
 
-**ทั้งหมดนี้เก็บเป็น metadata ของ Final Token** เพื่อใช้:
+**ทั้งหมดนี้เก็บเป็น metadata ของ Final Token** (Current: `flow_token.metadata`) เพื่อใช้:
 - ETA calculation
 - Analytics
 - Storytelling
 - Traceability
 
-**Database:**
+**Database (Current Reality):**
 ```sql
-flow_token (Final Token):
-  - component_times = '{"BODY": 7200, "FLAP": 5400, "STRAP": 3600}' (JSON)
-  - max_component_time = 7200 (seconds)
-  - total_component_time = 16200 (seconds)
-  - component_craftsmen = '{"BODY": "Worker A", "FLAP": "Worker B", "STRAP": "Worker C"}' (JSON)
-  - component_qc_status = '{"BODY": "pass", "FLAP": "pass", "STRAP": "pass"}' (JSON)
-  - merged_component_tokens = '[101, 102, 103]' (JSON array)
+flow_token.metadata (Final Token):
+  - component_times = {"BODY": 7200, "FLAP": 5400, "STRAP": 3600}
+  - max_component_time = 7200
+  - total_component_time = 16200
+  - component_craftsmen = {"BODY": "Worker A", "FLAP": "Worker B", "STRAP": "Worker C"}
+  - component_qc_status = {"BODY": "pass", "FLAP": "pass", "STRAP": "pass"}
+  - merged_component_tokens = [101, 102, 103]
 ```
 
 ---
@@ -485,6 +549,9 @@ flow_token (Final Token):
 ```
 Final Token F001 (re-activated at Assembly node):
   → Worker D sees in Work Queue: "Final Token F001 (components complete)"
+
+> **Reality guard (important):** โดย default ควร “ไม่แสดง component tokens ให้ Assembly worker”  
+> และควรมี view/flag เฉพาะสำหรับ component workers เท่านั้น เพื่อไม่ให้ Work Queue กลายเป็นกอง token ปนกัน
   → Worker D picks up "Tray F001" (contains all components)
   → Worker D starts work:
     TokenWorkSessionService::startToken(final_token_id)
@@ -517,7 +584,8 @@ ETA = 2 hours + 0.5 hours = 2.5 hours
 
 - ให้ถือว่าเป็นแค่ **label / human-readable ID**
 - ความสัมพันธ์แท้จริงระหว่าง Final ↔ Component:
-  - อยู่ที่ `parent_token_id` / `merged_into_token_id` / `parallel_group_id`
+  - อยู่ที่ `parent_token_id` / `parallel_group_id`
+  - (TARGET marker) `metadata.merged_into_token_id` ถ้าต้องการ tag ว่า component ถูก merge เข้ากับ final แล้ว
   - **ห้ามออกแบบ logic ว่า:**
     - "component_serial แบบนี้ต้องไปคู่กับ final_serial แบบนั้น"
   - **ความสัมพันธ์ทั้งหมดใช้ token graph เท่านั้น**
@@ -638,7 +706,7 @@ Work Queue (Assembly Worker):
 1. Component Token = Product-specific (not reusable)
 2. Component Token = Physical tray mapping (subgraph cannot handle)
 3. Component Token = Native parallel split (no subgraph overhead)
-4. Component Token = Component metadata (`produces_component`, `component_code`)
+4. Component Token = Component identity (`flow_token.component_code`) + node metadata (future: `produces_component`)
 5. Subgraph fork = Reusable parallel module (different purpose)
 
 **❌ WRONG: Using Subgraph fork**

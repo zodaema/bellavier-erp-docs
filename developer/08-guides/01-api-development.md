@@ -1,8 +1,8 @@
 # 🚀 Bellavier ERP - API Development Guide
 
 **Version:** 1.6 (Enterprise+ Edition)  
-**Date:** November 8, 2025, 23:30 ICT  
-**Last Updated:** November 8, 2025, 23:50 ICT  
+**Date:** December 4, 2025  
+**Last Updated:** December 9, 2025  
 **Purpose:** คู่มือการพัฒนา API ตามมาตรฐาน Enterprise ของ Bellavier ERP  
 **Reference:** `source/api_template.php` - Template มาตรฐานสำหรับ API ทั้งระบบ  
 **Changes in v1.6:** Added Naming Convention, Security & Concurrency Guard, PSR-4 Verification, and Commit Policy sections
@@ -38,6 +38,167 @@
 5. ✅ Test via browser
 
 **Reference Template:** `source/api_template.php` (184 lines, Enterprise-ready)
+
+---
+
+## 🔥 Complete Tenant API Example (Copy-Paste Ready)
+
+```php
+<?php
+/**
+ * [Module Name] API
+ * 
+ * @package Bellavier Group ERP
+ * @version 1.0
+ * @lifecycle runtime
+ * @tenant_scope true
+ * @permission module.view, module.manage
+ * @date YYYY-MM-DD
+ */
+
+// Session management
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/global_function.php';
+require_once __DIR__ . '/model/member_class.php';
+require_once __DIR__ . '/permission.php';
+
+use BGERP\Service\YourModuleService;
+use BGERP\Helper\RateLimiter;
+use BGERP\Bootstrap\TenantApiBootstrap;
+use BGERP\Http\TenantApiOutput;
+
+// Start output buffer
+TenantApiOutput::startOutputBuffer();
+
+header('Content-Type: application/json; charset=utf-8');
+header('X-Content-Type-Options: nosniff');
+
+// Correlation ID
+$cid = $_SERVER['HTTP_X_CORRELATION_ID'] ?? bin2hex(random_bytes(8));
+header('X-Correlation-Id: ' . $cid);
+
+// Execution timer
+$__t0 = microtime(true);
+
+// Authentication
+$objMemberDetail = new memberDetail();
+$member = $objMemberDetail->thisLogin();
+if (!$member) {
+    json_error(translate('common.error.unauthorized', 'Unauthorized'), 401, ['app_code' => 'AUTH_401_UNAUTHORIZED']);
+}
+$memberId = (int)($member['id_member'] ?? 0);
+
+// Maintenance mode check
+if (file_exists(__DIR__ . '/../storage/maintenance.flag')) {
+    header('Retry-After: 60');
+    json_error(translate('common.error.service_unavailable', 'Service unavailable'), 503, ['app_code' => 'CORE_503_MAINT']);
+}
+
+// Rate limiting
+RateLimiter::check($member, 120, 60, 'module_name');
+
+// Bootstrap tenant context
+[$org, $db] = TenantApiBootstrap::init();
+$tenantDb = $db->getTenantDb();
+
+// Initialize service
+$service = new YourModuleService($tenantDb);
+
+// Action routing
+$action = $_REQUEST['action'] ?? '';
+
+try {
+    switch ($action) {
+        case 'list':
+            handleList($service);
+            break;
+        case 'get':
+            handleGet($service);
+            break;
+        case 'create':
+            handleCreate($service, $member, $memberId);
+            break;
+        case 'update':
+            handleUpdate($service, $member, $memberId);
+            break;
+        case 'delete':
+            handleDelete($service, $member);
+            break;
+        default:
+            json_error(translate('common.error.invalid_action', 'Invalid action'), 400, ['app_code' => 'MODULE_400_INVALID']);
+    }
+} catch (InvalidArgumentException $e) {
+    error_log("[MODULE][$cid][User:$memberId][$action] Validation: " . $e->getMessage());
+    json_error($e->getMessage(), 400, ['app_code' => 'MODULE_400_VALIDATION']);
+} catch (Throwable $e) {
+    error_log("[MODULE][$cid][User:$memberId][$action] Error: " . $e->getMessage());
+    json_error(translate('common.error.server', 'An error occurred'), 500, ['app_code' => 'MODULE_500_ERROR']);
+}
+
+// Handler functions
+function handleList(YourModuleService $service): void
+{
+    $data = $service->getAll();
+    json_success(['data' => $data]);
+}
+
+function handleGet(YourModuleService $service): void
+{
+    $id = (int)($_REQUEST['id'] ?? 0);
+    if ($id <= 0) {
+        json_error(translate('common.error.missing_param', 'Missing id'), 400, ['app_code' => 'MODULE_400_MISSING_ID']);
+    }
+    
+    $item = $service->getById($id);
+    if (!$item) {
+        json_error(translate('common.error.not_found', 'Not found'), 404, ['app_code' => 'MODULE_404_NOT_FOUND']);
+    }
+    
+    json_success(['data' => $item]);
+}
+
+function handleCreate(YourModuleService $service, array $member, int $memberId): void
+{
+    must_allow_code($member, 'module.manage');
+    
+    // Validate and create...
+    $id = $service->create($_POST);
+    
+    json_success(['id' => $id, 'message' => translate('common.msg.created', 'Created')], 201);
+}
+
+function handleUpdate(YourModuleService $service, array $member, int $memberId): void
+{
+    must_allow_code($member, 'module.manage');
+    
+    // Validate and update...
+    $service->update($_POST);
+    
+    json_success(['message' => translate('common.msg.updated', 'Updated')]);
+}
+
+function handleDelete(YourModuleService $service, array $member): void
+{
+    must_allow_code($member, 'module.manage');
+    
+    $id = (int)($_REQUEST['id'] ?? 0);
+    $service->delete($id);
+    
+    json_success(['message' => translate('common.msg.deleted', 'Deleted')]);
+}
+```
+
+**Key Points:**
+- ✅ Use `TenantApiBootstrap::init()` → `$db->getTenantDb()`
+- ✅ Use `TenantApiOutput::startOutputBuffer()` 
+- ✅ Use `must_allow_code($member, 'permission')` for permission checks
+- ✅ All BGERP classes via PSR-4 autoload (no require_once)
+- ✅ Use `translate()` for all user-facing strings
 
 ---
 
@@ -192,7 +353,11 @@ curl -X POST http://localhost:8888/source/product.php \
 ### Required Includes
 
 ```php
-session_start();
+// Session management (check if already started)
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/global_function.php';
@@ -200,14 +365,25 @@ require_once __DIR__ . '/model/member_class.php';
 require_once __DIR__ . '/permission.php';
 ```
 
-### Enterprise Helper Imports
+### Enterprise Helper Imports (PSR-4 Autoloaded)
 
 ```php
+// Bootstrap & Output
+use BGERP\Bootstrap\TenantApiBootstrap;
+use BGERP\Http\TenantApiOutput;
+
+// Helpers
 use BGERP\Helper\DatabaseHelper;
 use BGERP\Helper\RateLimiter;
 use BGERP\Helper\RequestValidator;
 use BGERP\Helper\Idempotency;
+
+// Services (your module's service)
+use BGERP\Service\YourModuleService;
 ```
+
+**⚠️ NOTE:** All classes under `BGERP\` namespace are autoloaded via PSR-4.
+Do NOT use `require_once` for BGERP classes - just use `use` statements.
 
 ### Initialization Block
 
@@ -247,13 +423,26 @@ RateLimiter::check($member, 120, 60, 'module_name');
 // Parameters: $member, $maxRequests, $windowSeconds, $endpoint
 ```
 
-### Core Setup
+### Core Setup (RECOMMENDED: Using TenantApiBootstrap)
+
+**⚠️ IMPORTANT:** Always use `TenantApiBootstrap::init()` for tenant APIs. 
+Do NOT use legacy `tenant_db()` directly.
 
 ```php
-// --- Core Setup ----------------------------------------------------
-$tenantDb = tenant_db();
-$db = new DatabaseHelper($tenantDb);
+use BGERP\Bootstrap\TenantApiBootstrap;
+use BGERP\Http\TenantApiOutput;
+
+// Start output buffer to catch whitespace/BOM
+TenantApiOutput::startOutputBuffer();
+
+// Bootstrap tenant context (org resolution + DB connection)
+[$org, $db] = TenantApiBootstrap::init();
+$tenantDb = $db->getTenantDb();
+
+// Action routing
 $action = $_REQUEST['action'] ?? '';
+
+// AI Trace metadata
 $aiTrace = [
     'module' => basename(__FILE__, '.php'),
     'action' => $action,
@@ -262,6 +451,18 @@ $aiTrace = [
     'timestamp' => gmdate('c'),
     'request_id' => $cid
 ];
+```
+
+**Why TenantApiBootstrap?**
+- ✅ Handles org resolution correctly
+- ✅ Returns proper database wrapper with `getTenantDb()`
+- ✅ Consistent with all other tenant APIs (40+)
+- ✅ Proper error handling built-in
+
+**❌ LEGACY (Do NOT use for new APIs):**
+```php
+// This is deprecated for new APIs
+$tenantDb = tenant_db();  // Use TenantApiBootstrap::init() instead
 ```
 
 ### Service Auto-Binding (Recommended)
@@ -337,25 +538,58 @@ try {
 
 ## 🔧 Step-by-Step Implementation
 
+### Permission Check Pattern
+
+**For Tenant APIs, use `must_allow_code($member, 'permission.code')`:**
+
+```php
+// In handler function
+function handleCreate(YourService $service, array $member, int $memberId): void
+{
+    // Permission check - throws exception if denied
+    must_allow_code($member, 'module.manage');
+    
+    // ... rest of implementation
+}
+
+// Or in switch case
+case 'create':
+    must_allow_code($member, 'module.manage');
+    // ...
+    break;
+```
+
+**Permission Code Format:** `module.action`
+- `products.view` - View products
+- `products.manage` - Create/Edit/Delete products
+- `component.catalog.view` - View component catalog
+- `component.catalog.manage` - Manage component catalog
+
+**⚠️ IMPORTANT:** 
+- `must_allow_code()` is defined in `permission.php`
+- It throws exception if permission denied (no need to check return)
+- Always check permission BEFORE any business logic
+
+---
+
 ### 1. List Action (Read-Only)
 
 ```php
 case 'list':
-    must_allow_code($member, 'module.view');
+    // No permission check needed for read-only list (or use must_allow_code if required)
+    // must_allow_code($member, 'module.view');
 
     $rows = $db->fetchAll(
         "SELECT id, code, name, is_active FROM table_name ORDER BY id DESC"
     );
-    header('Content-Type: application/json; charset=utf-8');
     json_success(['data' => $rows]);
     break;
 ```
 
 **Key Points:**
 - ✅ Use `DatabaseHelper::fetchAll()` for SELECT queries
-- ✅ Set `Content-Type` header explicitly (not in global header)
-- ✅ Use `must_allow_code()` for permission check
-- ✅ Return via `json_success()`
+- ✅ Use `must_allow_code()` for permission check (if required)
+- ✅ Return via `json_success()` (automatically sets Content-Type)
 
 ### 2. Get Action (Single Record)
 
@@ -600,6 +834,7 @@ default:
 - [ ] **Idempotency** - For create operations (guard + store)
 - [ ] **ETag/If-Match** - For update/delete operations
 - [ ] **Error Code Mapping** - Use `$stmt->errno` (not `$tenantDb->error`)
+- [ ] **DatabaseHelper::execute() Semantics** - Treat `0` affected rows as success; only `=== false` is a DB failure (avoid `if (!$ok)` checks)
 - [ ] **Duplicate Handling** - Map MySQL 1062 → 409 Conflict
 - [ ] **201 Created** - Return 201 with Location header for create
 
@@ -1135,6 +1370,34 @@ $query = "SELECT * FROM table WHERE id = " . $_GET['id']; // SQL INJECTION RISK!
 $name = $_POST['name']; // WRONG! Always validate first
 ```
 
+### CSRF Protection (State‑Changing Operations)
+
+**Required for:** create/update/delete/publish/upload/save actions (POST/PUT/DELETE).
+
+**✅ DO (standard pattern):**
+```php
+use BGERP\Service\SecurityService;
+
+// 1) Origin/Referer check (basic CSRF hardening for AJAX)
+if (!SecurityService::validateOriginReferer()) {
+    json_error('invalid_origin', 403, ['app_code' => 'SEC_403_INVALID_ORIGIN']);
+}
+
+// 2) Token-based CSRF (session-based)
+// Accept token from header (recommended for AJAX) or POST
+$csrfToken = (string)($_POST['csrf_token'] ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''));
+if ($csrfToken === '' || !SecurityService::validateCsrfToken($csrfToken, 'module_name')) {
+    json_error('invalid_csrf_token', 403, ['app_code' => 'SEC_403_INVALID_CSRF']);
+}
+
+// Optional: rotate token after successful validation (prevents token reuse)
+SecurityService::regenerateCsrfToken('module_name');
+```
+
+**Notes:**
+- Use a consistent **scope** (recommended: module name, e.g. `products`, `product_api`).
+- Frontend should send `X-CSRF-Token` on state-changing requests.
+
 ### Error Message Security
 
 **✅ DO:**
@@ -1233,6 +1496,7 @@ echo "<div>" . $_POST['comment'] . "</div>"; // XSS RISK!
 
 - [ ] All user inputs validated with `RequestValidator`
 - [ ] All database queries use prepared statements
+- [ ] CSRF protection enabled for state-changing actions (Origin/Referer + token)
 - [ ] Permission checks on all privileged actions
 - [ ] Generic error messages (no DB details exposed)
 - [ ] Sensitive data masked in logs
@@ -1528,7 +1792,7 @@ use BGERP\Helper\Idempotency;
 - ✅ Best practices (DO/DON'T examples)
 - ✅ Troubleshooting guide
 
-### Version 1.5 (November 8, 2025) - Current
+### Version 1.5 (November 8, 2025)
 - ✅ Added Security Standards section
 - ✅ Added PSR-4 Service Layer integration guide
 - ✅ Added Folder & Naming Convention reference
@@ -1536,6 +1800,14 @@ use BGERP\Helper\Idempotency;
 - ✅ Added Developer Lifecycle Example (complete workflow)
 - ✅ Added Performance & Observability Tips
 - ✅ Added Version Policy section
+
+### Version 1.6 (December 4, 2025) - Current
+- ✅ Added **Complete Tenant API Example** (copy-paste ready template)
+- ✅ Added **TenantApiBootstrap Pattern** with `$db->getTenantDb()`
+- ✅ Added **Permission Check Pattern** with `must_allow_code()`
+- ✅ Updated PSR-4 imports (no require_once for BGERP classes)
+- ✅ Added `TenantApiOutput::startOutputBuffer()` requirement
+- ✅ Clarified deprecated `tenant_db()` vs recommended `TenantApiBootstrap::init()`
 
 ### Planned for Version 2.0
 - 🔄 Integration with OpenAPI/Swagger Generator
@@ -1553,7 +1825,7 @@ use BGERP\Helper\Idempotency;
 
 ---
 
-**Last Updated:** November 8, 2025, 23:30 ICT  
-**Template Version:** 1.5 (Enterprise+ Edition)  
+**Last Updated:** December 4, 2025  
+**Template Version:** 1.6 (Enterprise+ Edition)  
 **Document Status:** ✅ Production Ready - Suitable for external audit
 

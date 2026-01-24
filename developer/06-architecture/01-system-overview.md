@@ -1,7 +1,7 @@
 # 🎯 Bellavier ERP - Complete System Overview
 
-**Last Updated:** January 2025  
-**Version:** 5.0 (SuperDAG Integration Complete)  
+**Last Updated:** December 9, 2025  
+**Version:** 7.1 (SuperDAG Complete + Material System + UI Refactor)  
 **Status:** 100% Production Ready (Enterprise-Compliant)
 
 ---
@@ -10,17 +10,26 @@
 
 ### **What is Bellavier ERP?**
 Multi-tenant manufacturing ERP system designed for **dual production lines**:
-- 🎨 **Hatthasilpa** (Luxury, handcrafted, 1-50 pcs)
-- 🏭 **Classic** (Mass production, 50-1000+ pcs)
+- 🎨 **Hatthasilpa** (Luxury, handcrafted, 1-50 pcs) - Uses DAG Routing
+- 🏭 **Classic** (Mass production, 50-1000+ pcs) - Uses Linear Routing
 
-### **Current State:**
-- **Foundation:** 100% complete ✅
-- **DAG Engine:** 100% complete ✅
-- **Bootstrap Layers:** 100% complete ✅
-- **Enterprise APIs:** 100% compliant ✅
-- **Self-Healing:** 100% complete ✅
-- **MO Intelligence:** 100% complete ✅
-- **Overall:** 100% production-ready ✅
+### **Current State (December 2025):**
+
+| Module | Status | Notes |
+|--------|--------|-------|
+| **Foundation** | 100% ✅ | Multi-tenant, permissions, migrations |
+| **DAG Engine** | 100% ✅ | Token flow, parallel execution, self-healing |
+| **Bootstrap Layers** | 100% ✅ | TenantApiBootstrap, CoreApiBootstrap |
+| **Enterprise APIs** | 100% ✅ | Rate limiting, validation, idempotency |
+| **Self-Healing** | 100% ✅ | LocalRepair, TimelineReconstruction |
+| **MO Intelligence** | 100% ✅ | ETA, health monitoring |
+| **Component Architecture V2** | 100% ✅ | 3-layer model (NEW) |
+| **Product Readiness** | 100% ✅ | Configuration validation (NEW) |
+| **Material Requirement** | 100% ✅ | Backend complete, UI pending (NEW) |
+| **Defect Catalog** | 100% ✅ | 36 defects, 8 categories (NEW) |
+| **QC Rework V2** | 100% ✅ | Component-aware rework (NEW) |
+| **Graph Linter** | 100% ✅ | 30+ validation rules (NEW) |
+| **MCI (Component Injection)** | 100% ✅ | Missing component handling (NEW) |
 
 ### **Key Achievement:**
 > "Flow ไม่ขาด, งานไม่หาย, คนไม่หลง"
@@ -36,300 +45,324 @@ Multi-tenant manufacturing ERP system designed for **dual production lines**:
 │                    BELLAVIER ERP                            │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  🏭 Classic Production Line                                    │
-│  ├─ MO (Manufacturing Order)                               │
-│  ├─ Linear Routing (DAG deprecated after Task 25.3)        │
-│  ├─ PWA Scan-based Tracking                               │
-│  ├─ Batch Processing                                       │
-│  ├─ Production Output Stats (production_output_daily)      │
-│  └─ Mass Production Workflow                               │
+│  🏭 Classic Production Line                                 │
+│  ├─ MO (Manufacturing Order)                                │
+│  ├─ Linear Routing (job_ticket → tasks → wip_logs)          │
+│  ├─ PWA Scan-based Tracking                                 │
+│  ├─ Batch Processing                                        │
+│  ├─ production_output_daily Statistics                      │
+│  └─ Components + BOM (required for inventory)               │
 │                                                             │
-│  🎨 Hatthasilpa Production Line                                │
-│  ├─ Hatthasilpa Jobs (1-click)                                 │
-│  ├─ DAG Routing (required)                                  │
+│  🎨 Hatthasilpa Production Line                             │
+│  ├─ Hatthasilpa Jobs (1-click creation)                     │
+│  ├─ DAG Routing (required, graph-based)                     │
 │  ├─ Graph Binding (required)                                │
+│  ├─ Component Mapping (required)                            │
 │  ├─ Work Queue System                                       │
-│  ├─ Token-based Tracking                                   │
-│  └─ Quality-First Workflow                                 │
+│  ├─ Token-based Tracking                                    │
+│  └─ Quality-First Workflow                                  │
 │                                                             │
-│  🔄 SuperDAG (Directed Acyclic Graph) Routing               │
-│  ├─ Token-based flow (flow_token)                          │
-│  ├─ Parallel execution (split/merge)                       │
-│  ├─ Conditional routing                                    │
-│  ├─ Machine binding & allocation                           │
-│  ├─ Self-healing (LocalRepair, TimelineReconstruction)      │
-│  ├─ Canonical events (token_event)                          │
-│  ├─ Time Engine (ETA/SLA calculation)                      │
-│  └─ Node Behavior Engine (BATCH/HAT/CLASSIC/QC modes)     │
-│  ├─ Node-level tracking                                    │
-│  └─ Auto-assignment                                        │
+│  🔄 SuperDAG Engine                                         │
+│  ├─ Token Lifecycle (spawn/move/complete)                   │
+│  ├─ Parallel Execution (split/merge)                        │
+│  ├─ Conditional Routing                                     │
+│  ├─ Machine Binding & Allocation                            │
+│  ├─ Self-Healing (LocalRepair, TimelineReconstruction)      │
+│  ├─ Canonical Events (token_event)                          │
+│  ├─ Time Engine (ETA/SLA calculation)                       │
+│  ├─ Node Behavior Engine (CUT/STITCH/QC/etc.)               │
+│  ├─ QC Rework V2 (component-aware)                          │
+│  ├─ Graph Linter (30+ validation rules)                     │
+│  └─ MCI (Missing Component Injection)                       │
 │                                                             │
-│  👥 Work Queue System                                      │
-│  ├─ Operator interface                                     │
-│  ├─ Manager dashboard                                      │
-│  ├─ Real-time monitoring                                   │
-│  └─ Assignment & tracking                                  │
+│  📦 Component Architecture V2                               │
+│  ├─ Layer 1: component_type_catalog (24 types)              │
+│  ├─ Layer 2: product_component (per-product)                │
+│  ├─ Layer 3: product_component_material (BOM)               │
+│  └─ Graph Mapping: graph_component_mapping                  │
+│                                                             │
+│  🧮 Material Requirement System                             │
+│  ├─ material_requirement (calculated per job)               │
+│  ├─ material_reservation (reserve at job creation)          │
+│  ├─ material_allocation (consume at node)                   │
+│  └─ Views: v_material_available, v_job_material_status      │
+│                                                             │
+│  ✅ Product Readiness System                                │
+│  ├─ ProductReadinessService                                 │
+│  ├─ Readiness Criteria (graph, components, mapping)         │
+│  └─ Block non-ready products from job creation              │
+│                                                             │
+│  👥 Work Queue System                                       │
+│  ├─ Operator Interface (Kanban view)                        │
+│  ├─ Manager Dashboard                                       │
+│  ├─ Real-time Monitoring                                    │
+│  ├─ Assignment & Tracking                                   │
+│  ├─ TokenCardComponent ⭐ (NEW Dec 9) - Modular UI          │
+│  │  ├─ TokenCardState.js - State computation                │
+│  │  ├─ TokenCardParts.js - UI parts (buttons, warnings)     │
+│  │  └─ TokenCardLayouts.js - Layouts (kanban/list/mobile)   │
+│  └─ WorkModalController.js ⭐ (NEW Dec 9) - Behavior modals │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✅ **What's Implemented (60%)**
+## ✅ **December 2025 Completed Tasks**
 
-### **Database Layer (80%) ✅**
-- 35+ tables (all core tables created)
-- 21 migrations deployed
-- 15+ performance indexes
-- Multi-tenant architecture
+### **Task 27.12-27.19 Summary:**
 
-**Key Tables:**
-- `routing_graph`, `routing_node`, `routing_edge` (DAG templates)
-- `job_graph_instance`, `node_instance` (Job execution)
-- `flow_token`, `token_event` (Work units)
-- `node_assignment`, `token_assignment` (Assignment)
-- `hatthasilpa_job_ticket`, `mo` (Jobs)
+| Task | Name | Status |
+|------|------|--------|
+| 27.12 | Component Catalog System | ✅ Complete |
+| 27.13.11b | Product Component BOM | ✅ Complete |
+| 27.13.12 | Component Mapping Refactor | ✅ Complete |
+| 27.14 | Defect Catalog | ✅ Complete |
+| 27.15 | QC Rework V2 | ✅ Complete |
+| 27.16 | Graph Linter | ✅ Complete |
+| 27.17 | MCI (Component Injection) | ✅ Complete |
+| 27.18 | Material Requirement (Backend) | ✅ Complete |
+| 27.19 | Product Readiness System | ✅ Complete |
 
-### **Service Layer (75%) ✅**
-8 services implemented:
-- ✅ `TokenLifecycleService` - Token spawn/move/complete
-- ✅ `DAGRoutingService` - Split/join/conditional routing
-- ✅ `NodeAssignmentService` - Pre-assignment, auto-assign
-- ✅ `ProductionRulesService` - Hatthasilpa/Classic validation
-- ✅ `RoutingSetService` - Template suggestions
-- ✅ `WorkEventService` - Unified history
-- ✅ `ValidationService` - Input validation
-- ✅ `DatabaseTransaction` - Transaction management
+### **New Database Tables (Dec 2025):**
 
-### **Manager Tools (70%) ✅**
-- ✅ **Manager Assignment** - Pre-assign operators to nodes
-- ✅ **Token Management** - Edit, cancel, reassign, bulk operations
-- ✅ **Hatthasilpa Jobs** - 1-click job creation with auto-start
+```sql
+-- Component Architecture V2
+component_type_catalog      -- 24 generic component types (BODY, STRAP, etc.)
+product_component           -- Product-specific components
+product_component_material  -- BOM per component
+graph_component_mapping     -- Map anchor_slot → product_component
 
-### **APIs (70%) ✅**
-- ✅ `atelier_jobs_api.php` - Hatthasilpa job creation
-- ✅ `hatthasilpa_job_ticket.php` - Complete job/task management
-- ✅ `mo.php` - MO CRUD (partial)
-- ✅ `assignment_api.php` - Token assignment
-- ✅ `token_management_api.php` - Token operations
+-- QC & Defect
+defect_category             -- 8 categories
+defect_catalog              -- 36 defect definitions
+qc_rework_override_log      -- Supervisor override audit
 
----
+-- Material System
+material_requirement        -- Calculated requirements per job
+material_reservation        -- Reserved stock
+material_allocation         -- Allocated/consumed materials
+material_requirement_log    -- Audit trail
+  └─ Event types ⭐ (NEW Dec 9): rework_reserve, material_returned_scrap, material_wasted_scrap
 
-## ❌ **What's Missing (40%)**
+-- Views
+v_material_available        -- on_hand - reserved = available
+v_job_material_status       -- Job material summary
 
-### **System Intelligence (30%) ❌**
-- ❌ **Work Item System** - Token → Work Item → Operator layer
-- ❌ **Assignment Engine** - Auto-select operator based on rules
-- ❌ **Auto-Reassign** - Handle timeout/absent operators
-- ❌ **Graph Validation** - Prevent invalid graph designs
-
-### **UX Completeness (40%) ❌**
-- ❌ **Production Control Center** - Unified dashboard
-- ❌ **Claim/Handoff/Requeue** - Operator workflow
-- ❌ **Multi-Operator Nodes** - Synchronous work support
-- ❌ **Manager Inbox** - Approval queue
-- ❌ **Operator KPI** - Performance dashboard
-
-### **Business Logic (50%) ❌**
-- ❌ **Token Cancellation** - Replacement/redesign mechanism
-- ❌ **MO Workflow** - Start Production incomplete
-- ❌ **Graph Rules** - Serial requirements, edge validation
-- ❌ **Node Presets** - Design templates
-
----
-
-## 🗓️ **6-Week Roadmap to 100%**
-
-### **Week 1: Critical Fixes** 🔴
-**Goal:** 80% production-ready
-
-**Tasks:**
-- Token cancellation (3 types: QC Fail, Redesign, Permanent)
-- Graph validation rules
-- MO hardcode to Classic
-
-**Time:** 10-14 hours  
-**Result:** Core system stable
-
----
-
-### **Week 2-3: Work Item System** 🟡
-**Goal:** 90% production-ready
-
-**Tasks:**
-- Create work_item table + WorkItemService
-- Implement claim/handoff/requeue workflow
-- Support multi-operator nodes
-- Update Work Queue UI
-
-**Time:** 20 hours  
-**Result:** Complex workflows supported
-
----
-
-### **Week 4-5: Assignment Engine** 🟡
-**Goal:** 95% production-ready
-
-**Tasks:**
-- Build assignment rule engine
-- Auto-select operator
-- Auto-reassign on timeout/absent
-- Manager inbox for approvals
-
-**Time:** 20 hours  
-**Result:** Automation working
-
----
-
-### **Week 6: Production Control Center** 🟢
-**Goal:** 100% production-ready
-
-**Tasks:**
-- Build unified dashboard (3 modes)
-- Real-time monitoring
-- Bulk operations
-- Live activity feed
-
-**Time:** 24 hours  
-**Result:** World-class UX
-
----
-
-## 🎯 **Key Features by User**
-
-### **For Operators (ช่าง):**
-- ✅ Work Queue (see assigned tokens) - **BASIC**
-- ⚠️ Start/Complete (basic workflow) - **PARTIAL**
-- ❌ Claim/Handoff (flexible workflow) - **MISSING**
-- ❌ KPI Dashboard - **MISSING**
-
-### **For Managers (หัวหน้า):**
-- ✅ Manager Assignment (pre-assign nodes) - **COMPLETE**
-- ✅ Token Management (edit, cancel, bulk) - **COMPLETE**
-- ✅ Hatthasilpa Jobs (1-click creation) - **COMPLETE**
-- ⚠️ MO Management (Start Production incomplete) - **PARTIAL**
-- ❌ Production Control Center (unified view) - **MISSING**
-- ❌ Manager Inbox (approvals) - **MISSING**
-
-### **For Production Planners:**
-- ⚠️ Routing Graph Designer (exists but no validation) - **PARTIAL**
-- ❌ Calendar/Gantt planning - **MISSING**
-- ❌ Capacity planning - **MISSING**
-- ❌ Auto-scheduling - **MISSING**
-
----
-
-## 📚 **Documentation Structure**
-
-### **Quick Access:**
+-- Audit
+product_config_log          -- Product configuration changes
+component_injection_log     -- MCI audit trail
 ```
-START HERE:
-├─ README.md              (Project overview)
-├─ QUICK_START.md         (60-second guide)
-├─ STATUS.md              (Current state)
-└─ ROADMAP_V4.md          (Implementation plan)
 
-DESIGN:
-├─ docs/DUAL_PRODUCTION_MASTER_BLUEPRINT.md ⭐
-├─ docs/IMPLEMENTATION_STATUS_MAP.md
-├─ docs/MO_VS_ATELIER_JOBS_CLARIFICATION.md
-└─ docs/PRODUCTION_CONTROL_CENTER_IMPLEMENTATION_PLAN.md
+### **New Services (Dec 2025):**
 
-REFERENCE:
-├─ docs/DATABASE_SCHEMA_REFERENCE.md
-├─ docs/SERVICE_API_REFERENCE.md
-└─ docs/API_REFERENCE.md
-
-USER GUIDES:
-├─ docs/OPERATOR_QUICK_GUIDE_TH.md
-├─ docs/MANAGER_QUICK_GUIDE_TH.md
-└─ docs/WORK_QUEUE_OPERATOR_JOURNEY.md
 ```
+source/BGERP/Service/
+├─ ComponentMappingService.php      -- V2 mapping (anchor → component)
+├─ ProductReadinessService.php      -- Readiness validation
+├─ MaterialRequirementService.php   -- Calculate BOM requirements
+├─ MaterialReservationService.php   -- Reserve/release stock
+├─ MaterialAllocationService.php    -- Consume materials
+│  └─ handleScrapMaterials() ⭐ (NEW Dec 9) -- Scrap material handling
+├─ PermissionEngine.php ⭐ (NEW Dec 9) -- Token-level permissions
+
+source/BGERP/Dag/
+├─ ComponentInjectionService.php    -- MCI implementation
+├─ GraphLinterService.php           -- 30+ validation rules
+├─ QCReworkV2Service.php            -- Component-aware rework
+```
+
+---
+
+## 🗓️ **Recent Completions (December 2025)**
+
+### ✅ **Task 27.20: Work Modal Behavior** (Complete)
+- Work Modal Controller with behavior-specific UI
+- Dynamic UI panels per node behavior (CUT, STITCH, QC, etc.)
+- API integration for data submission
+- Results: `docs/super_dag/tasks/archive/results/task27.20_results.md`
+
+### ✅ **Task 27.21.1: Rework Material Reserve Plan** (Complete)
+- Material reservation for rework tokens
+- Partial reserve handling with shortage detection
+- Material logging and audit trail
+- Results: `docs/super_dag/tasks/archive/results/task27.21.1_results.md`
+
+### ✅ **Task 27.22: Token Card Component Refactor** (Complete)
+- Single component pattern (TokenCardComponent)
+- Modular architecture (State → Parts → Layouts)
+- Files: `assets/javascripts/pwa_scan/token_card/`
+
+### ✅ **Task 27.22.1: Token Card Logic Issues** (Complete)
+- All 5 issues resolved and tested
+- Specs: `docs/super_dag/specs/QC_POLICY_RULES.md`
+
+### ✅ **Task 27.23: Permission Engine Refactor** (Phase 0-4 Complete)
+- Centralized permission checks using `ACTION_PERMISSIONS`
+- Refactored 7 API files
+
+### ✅ **Task 27.24: Work Modal Refactor** (Complete)
+- WorkModalController.js improvements
+- Better error handling and user feedback
+
+### ✅ **Task 27.25: Permission UI Improvement** (Complete)
+- Improved permission error messages
+- Better user experience for access denied scenarios
+
+### **New Systems Added (Dec 9, 2025):**
+
+**1. PermissionEngine Service ⭐**
+- Token-level permission checks
+- 4-layer permission model (Role → Assignment → Node Config → Token Type)
+- Supports ACTION_PERMISSIONS pattern
+- Location: `source/BGERP/Service/PermissionEngine.php`
+
+**2. TokenCardComponent Architecture ⭐**
+- Single component pattern (replaces scattered legacy code)
+- Modular design: State → Parts → Layouts
+- Files:
+  - `TokenCardComponent.js` - Main component
+  - `TokenCardState.js` - State computation
+  - `TokenCardParts.js` - UI parts (buttons, warnings, timers)
+  - `TokenCardLayouts.js` - Layouts (kanban, list, mobile)
+- Location: `assets/javascripts/pwa_scan/token_card/`
+
+**3. WorkModalController ⭐**
+- Behavior-specific modal UI
+- Dynamic panels per node behavior (CUT, STITCH, QC, etc.)
+- API integration for data submission
+- Location: `assets/javascripts/pwa_scan/WorkModalController.js`
+
+**4. Material Scrap Handling (Task 27.21.1) ⭐**
+- `MaterialAllocationService::handleScrapMaterials()` method
+- Handles material return/waste for scrapped tokens
+- New event types in `material_requirement_log`:
+  - `rework_reserve` - Material reserved for rework
+  - `material_returned_scrap` - Material returned to stock
+  - `material_wasted_scrap` - Material marked as waste
+- Migration: `2025_12_rework_material_logging.php`
+
+**5. QC Policy Rules ⭐**
+- Self-QC allowed for unassigned tokens
+- Assigned tokens require assigned user for QC
+- Documented in: `docs/super_dag/specs/QC_POLICY_RULES.md`
+
+## 🗓️ **Pending Tasks (Next Phase)**
+
+### **Task 27.26: DAG Routing API & JS Refactor** (Planned Q1 2026)
+- Refactor `dag_routing_api.php` (7,793 lines, 40 actions)
+- Refactor `graph_designer.js` (8,839 lines)
+- High risk, deferred to Q1 2026
+
+### **Future Roadmap:**
+- Node Behavior handlers completion
+- Production Stock Dashboard
+- Cost calculation from BOM
+- Production analytics and reporting
 
 ---
 
 ## 🔑 **Key Concepts**
 
 ### **1. Dual Production Model**
-**Hatthasilpa (Luxury):**
-- Qty: 1-50 pcs
-- Schedule: Flexible
-- QC: 100% inspection
-- Workflow: Hatthasilpa Jobs → DAG Routing → Work Queue → Tokens
-- **Graph Binding:** Required (must bind routing graph)
-- **Work Queue:** Hatthasilpa only (operator interface)
 
-**Classic (Mass):**
-- Qty: 50-1000+ pcs
-- Schedule: Strict (due dates mandatory)
-- QC: Sampling (10%)
-- Workflow: MO → Job Ticket (Linear) → PWA Scan → Output Stats
-- **Graph Binding:** Not supported (deprecated after Task 25.3)
-- **PWA Scanners:** Classic only (simple scan in/out)
+| Aspect | Hatthasilpa | Classic |
+|--------|-------------|---------|
+| **Qty** | 1-50 pcs | 50-1000+ pcs |
+| **Routing** | DAG (graph-based) | Linear (sequential) |
+| **Tracking** | Token-based | WIP Log-based |
+| **QC** | 100% inspection | Sampling (10%) |
+| **Graph Binding** | ✅ Required | ❌ Not used |
+| **Component Mapping** | ✅ Required | ❌ Not used |
+| **Components Tab** | ✅ Required | ✅ Required |
+| **Work Queue** | ✅ Used | ❌ Not used |
 
-### **1.1 Product v2 Features (Task 25.x-26.x)**
-**Product Line Separation:**
-- `production_line` field: `'classic'` or `'hatthasilpa'`
-- Determines which production workflow to use
-- Classic products: Linear routing only
-- Hatthasilpa products: DAG routing required
+### **2. Component Architecture V2 (3-Layer Model)**
 
-**Draft/Publish Flow:**
-- `is_draft` flag: Draft products not visible in production
-- Duplicate → Draft → Edit → Publish workflow
-- UI: "Duplicate" button creates draft, "Publish" activates product
+```
+Layer 1: component_type_catalog
+├─ Generic types: BODY, FLAP, STRAP, HANDLE, LINING, etc.
+├─ 24 predefined types covering all leather goods
+└─ Used in Graph Designer as anchor_slot
 
-**Classic Dashboard:**
-- Classic Dashboard tab in Product modal (Classic products only)
-- Displays `production_output_daily` statistics
-- Shows completed quantity, lead time, output dates
-- Not available for Hatthasilpa products (they use Graph Dashboard)
+Layer 2: product_component
+├─ Product-specific: "BODY สำหรับ Aimee Mini สีเขียว"
+├─ Links to Layer 1 type
+└─ Per-product configuration
 
-### **2. Token-Based Flow (Hatthasilpa Only)**
-- **Token** = Work unit (1 piece or 1 batch)
-- Flows through **routing graph** (DAG)
-- Each **node** = work station
-- Each **edge** = routing path
-- **Classic Line:** Does NOT use tokens (uses job_ticket + wip_log)
+Layer 3: product_component_material (BOM)
+├─ Materials for each component
+├─ Quantity, UoM, waste factor
+└─ Used for material requirement calculation
+```
 
-### **3. Work Item System** (To Implement)
-- Token enters node → Creates work_item
-- Operator claims work_item
-- Multiple operators can work on same token (different nodes)
-- Tracks claimed/in-progress/done states
+### **3. Material Flow**
 
-### **4. Assignment Logic**
-- **Pre-assignment:** Manager assigns operators to nodes
-- **Auto-assignment:** System assigns tokens to pre-assigned operators
-- **Auto-reassign:** System reassigns on timeout/absent
+```
+Job Creation
+    ↓
+1. Read BOM via Components → product_component_material
+    ↓
+2. Calculate total requirements (qty × BOM per piece)
+    ↓
+3. Check stock availability (on_hand - reserved)
+    ↓
+4. Reserve materials (material_reservation)
+    ↓
+5. Job starts → token flows through nodes
+    ↓
+6. At CUT node: allocate/consume materials
+    ↓
+7. Track waste/scrap
+    ↓
+8. Job complete: finalize consumption records
+```
+
+### **4. Product Readiness**
+
+A product is "ready" when:
+
+**For Hatthasilpa:**
+- ✅ Production Line = 'hatthasilpa'
+- ✅ Graph Binding (has bound graph)
+- ✅ Graph Published (is_published = 1)
+- ✅ Graph has START node
+- ✅ Has Components (at least 1)
+- ✅ Each Component has Materials (BOM)
+- ✅ Component Mapping complete
+
+**For Classic:**
+- ✅ Production Line = 'classic'
+- ✅ Has Components (at least 1)
+- ✅ Each Component has Materials (BOM)
+
+Non-ready products are **blocked** from job creation.
 
 ---
 
-## 🎯 **Success Metrics**
+## 📚 **Documentation Structure**
 
-### **By End of Implementation (Week 6):**
-
-**Data Integrity:** 95/100
-- ✅ Token flow never breaks
-- ✅ Work accurately tracked
-- ✅ Audit trail complete
-
-**Performance:** 90/100
-- ✅ < 100ms response time
-- ✅ Handles 1000+ items
-- ✅ Real-time updates
-
-**User Experience:** 95/100
-- ✅ One-page control center
-- ✅ Minimal clicks
-- ✅ Clear feedback
-
-**Automation:** 90/100
-- ✅ Auto-assignment working
-- ✅ Auto-reassign on issues
-- ✅ Bulk operations supported
-
-**Overall:** 100/100 Production Ready ✅
+```
+docs/
+├─ developer/
+│   ├─ 06-architecture/
+│   │   ├─ 01-system-overview.md     ← YOU ARE HERE
+│   │   ├─ 02-system-architecture.md
+│   │   ├─ 03-platform-overview.md
+│   │   └─ 04-ai-context.md
+│   └─ ...
+├─ super_dag/
+│   ├─ SYSTEM_CURRENT_STATE.md       ← Current SuperDAG state
+│   ├─ DOCUMENTATION_INDEX.md        ← SuperDAG doc index
+│   ├─ 01-concepts/                  ← Core concepts
+│   ├─ 02-core/                      ← Core specifications
+│   ├─ tasks/                        ← Task plans
+│   │   ├─ MASTER_IMPLEMENTATION_ROADMAP.md
+│   │   ├─ task27.20_NODE_BEHAVIOR_UI_PLAN.md
+│   │   └─ task27.21_MATERIAL_INTEGRATION_PLAN.md
+│   └─ results/                      ← Task completion records
+└─ ...
+```
 
 ---
 
@@ -337,15 +370,14 @@ USER GUIDES:
 
 ### **1. Read Documentation (30 minutes)**
 ```bash
-1. QUICK_START.md         (This file)
-2. STATUS.md              (Current state)
-3. ROADMAP_V4.md          (What to build)
-4. DUAL_PRODUCTION_MASTER_BLUEPRINT.md (How to build)
+1. This file (01-system-overview.md)
+2. docs/super_dag/SYSTEM_CURRENT_STATE.md
+3. docs/super_dag/DOCUMENTATION_INDEX.md
+4. docs/DEVELOPER_POLICY.md
 ```
 
-### **2. Setup Environment (5 minutes)**
+### **2. Setup Environment**
 ```bash
-# Already setup at:
 cd /Applications/MAMP/htdocs/bellavier-group-erp
 
 # Install dependencies
@@ -353,128 +385,53 @@ composer install
 
 # Run tests
 vendor/bin/phpunit
-# Should see: 89 tests passing
+# Should see: 104+ tests passing
 ```
 
-### **3. Pick a Task (1 minute)**
+### **3. Database Connection**
 ```bash
-# See ROADMAP_V4.md
-# Example: Week 1, Day 1 - Token Cancellation
+# MySQL via MAMP
+/Applications/MAMP/Library/bin/mysql -h localhost -P 8889 -u root -proot
+
+# Core DB
+USE bgerp;
+
+# Tenant DB (example)
+USE bgerp_t_maison_atelier;
 ```
 
-### **4. Read Implementation Plan (10 minutes)**
-```bash
-# Each major feature has detailed plan
-# Example: docs/PRODUCTION_CONTROL_CENTER_IMPLEMENTATION_PLAN.md
-```
+### **4. Key Credentials**
+- Login: `admin` / `iydgtv`
+- Tenant: `maison_atelier`
 
-### **5. Start Coding!**
-```bash
-# Follow project structure:
-# - page/       (Page definitions)
-# - views/      (HTML templates)
-# - source/     (Backend APIs)
-# - assets/     (Frontend JS/CSS)
-```
+---
+
+## 🎯 **Success Metrics**
+
+| Metric | Target | Current |
+|--------|--------|---------|
+| **Test Coverage** | 80%+ | ✅ 104+ tests |
+| **API Response Time** | < 100ms | ✅ Achieved |
+| **Token Flow Integrity** | 100% | ✅ Self-healing |
+| **Enterprise Compliance** | 100% | ✅ Rate limiting, validation |
+| **Documentation** | Complete | ✅ Updated Dec 2025 |
 
 ---
 
 ## 📞 **Support & Resources**
 
 ### **Documentation:**
-- **Index:** `DOCUMENTATION_INDEX.md`
-- **Troubleshooting:** `docs/TROUBLESHOOTING_GUIDE.md`
-- **API Reference:** `docs/SERVICE_API_REFERENCE.md`
+- **Developer Policy:** `docs/DEVELOPER_POLICY.md`
+- **API Guide:** `docs/developer/02-api-development/`
+- **Database Schema:** `docs/DATABASE_SCHEMA_REFERENCE.md`
 
 ### **Code Examples:**
-- **Services:** `source/service/`
-- **APIs:** `source/`
+- **Services:** `source/BGERP/Service/`
+- **DAG Services:** `source/BGERP/Dag/`
 - **Tests:** `tests/Unit/`, `tests/Integration/`
 
-### **Learning Path:**
-1. Read master blueprint (30 min)
-2. Review existing code (30 min)
-3. Run tests (5 min)
-4. Pick a task (1 min)
-5. Code & test (2-8 hours per task)
-
 ---
 
-## 🎖️ **Team Guidelines**
-
-### **Development Standards:**
-- ✅ Write tests for all features
-- ✅ Use PHP migrations (not SQL)
-- ✅ Follow project structure
-- ✅ Document as you go
-- ✅ Code review before merge
-
-### **Quality Gates:**
-- ✅ All tests passing
-- ✅ No security vulnerabilities
-- ✅ Performance acceptable (< 100ms)
-- ✅ Documentation updated
-- ✅ Code reviewed
-
----
-
-## 📈 **Progress Tracking**
-
-### **Milestones:**
-- ✅ **Nov 1-2:** DAG Foundation (7 tables + 3 services)
-- ✅ **Nov 4:** DAG Pilot (Work Queue + Manager Assignment)
-- ✅ **Nov 5:** Planning Complete (Blueprint + Roadmap)
-- ⏳ **Week 1:** Critical Fixes → 80% ready
-- ⏳ **Week 3:** Work Item System → 90% ready
-- ⏳ **Week 5:** Assignment Engine → 95% ready
-- ⏳ **Week 6:** Control Center → 100% ready
-
-### **Sprint Goals:**
-- **Sprint 1 (Week 1):** Fix critical gaps
-- **Sprint 2 (Week 2-3):** Build work item system
-- **Sprint 3 (Week 4-5):** Automate assignment
-- **Sprint 4 (Week 6):** Polish UX
-
----
-
-## 🏆 **Vision Statement**
-
-Build a production system where:
-- ✅ **Token flows never break** (replacement mechanism)
-- ✅ **Work is never lost** (work_item tracking)
-- ✅ **Operators are never confused** (assignment engine)
-- ✅ **Managers see everything** (control center)
-- ✅ **Supports both Hatthasilpa and Classic** (dual production model)
-- ✅ **Scales to 1000+ items** (performance optimized)
-- ✅ **100% tested** (quality first)
-
-**Result:** World-class manufacturing ERP ✨
-
----
-
-## 📋 **Next Actions**
-
-### **For Project Manager:**
-1. ✅ Review `ROADMAP_V4.md`
-2. ✅ Approve implementation plan
-3. ✅ Allocate resources (1 dev × 6 weeks)
-4. ✅ Set sprint milestones
-
-### **For Developers:**
-1. ✅ Read `DUAL_PRODUCTION_MASTER_BLUEPRINT.md`
-2. ✅ Review `IMPLEMENTATION_STATUS_MAP.md`
-3. ✅ Start Week 1, Day 1 (Token Cancellation)
-4. ✅ Follow test-driven development
-
-### **For Users:**
-1. ✅ Read relevant quick guide
-2. ✅ Test current features
-3. ✅ Provide feedback
-4. ✅ Prepare for new features
-
----
-
-**Status:** Ready to proceed with implementation ✅  
-**Timeline:** 6 weeks to 100% production-ready  
-**Start Date:** Awaiting approval
-
+**Status:** ✅ Production Ready  
+**Version:** 7.0 (December 2025)  
+**Next Task:** 27.20 Node Behavior UI / 27.21 Material Integration UI

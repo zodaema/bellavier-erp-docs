@@ -76,8 +76,8 @@
 
 ### ❌ Bootstrap Signature Changes
 **DO NOT** change bootstrap method signatures:
-- `TenantApiBootstrap::init()` - Returns `[$org, $tenantDb, $member]`
-- `CoreApiBootstrap::init($mode)` - Returns `[$member, $coreDb]`
+- `TenantApiBootstrap::init()` - Returns `[$org, $db]` where `$db` is `BGERP\Helper\DatabaseHelper`
+- `CoreApiBootstrap::init([...])` - Returns `[$member, $coreDb, $tenantDb, $org, $cid]`
 - These are used by 52+ APIs and all integration tests
 
 **Exception**: Only if Task explicitly requests signature change.

@@ -1124,10 +1124,11 @@ json_error('operator_not_found', 404, [
 | ✅ **Tenant Isolation** | All queries scoped by `id_org` | Required | ✅ |
 | ✅ **Input Validation** | Every POST/GET param validated | Required | ⚠️ |
 | ✅ **SQL Injection** | All queries use prepared statements | Required | ✅ |
+| ✅ **DB Write Semantics** | `DatabaseHelper::execute()` returns `false` on error, `0+` affected rows on success (0 = no-op). Never use `if (!$ok)` | Required | ✅ |
 | ✅ **XSS Prevention** | Output escaped with `htmlspecialchars()` | Required | ⚠️ |
 | ⚠️ **File Upload** | Must use `/uploads/temp/` and sanitize names | Required | ⚠️ |
 | ⚠️ **External API** | Require approval + timeout handling | Required | ⚠️ |
-| ⚠️ **CSRF Protection** | Not applicable (API-only, session-based) | N/A | ✅ |
+| ✅ **CSRF Protection** | Required for state-changing actions (session-based). Validate Origin/Referer + `X-CSRF-Token` | Required | ✅ |
 | ⚠️ **Rate Limiting** | IP/Member-based, return 429 + Retry-After | Required | ⏳ |
 | ⚠️ **Input Sanitization** | Use `ValidationService` for all inputs | Recommended | ⚠️ |
 | ⚠️ **PII Redaction** | Never log: phone, email, tokens, file paths | Required | ⚠️ |
@@ -1160,6 +1161,13 @@ json_error('operator_not_found', 404, [
    ```php
    must_allow_code($member, 'permission.code');
    ```
+
+5. **Always enforce CSRF for state-changing actions (session-based APIs):**
+   - Frontend must send header: `X-CSRF-Token`
+   - Token source: `source/security_api.php?action=csrf_token&scope={scope}`
+   - Backend should validate Origin/Referer + CSRF token (use the enterprise pattern from `source/api_template.php`)
+
+   **Frontend (preferred):** use `BG.api.request()` from `assets/javascripts/global_script.js` (auto CSRF + correlation id)
 
 ### PII Redaction (Log Security)
 

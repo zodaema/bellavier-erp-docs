@@ -81,13 +81,13 @@ Think of the ERP as a living organism with **critical bloodlines** (wiring paths
 
 - **Database Tables:** 135 tables (13 core + 122 tenant)
 - **API Files:** 85+ files (77+ migrated, 8+ legacy)
-- **Services/Engines:** 84 total
-  - 47 services
+- **Services/Engines:** 87 total
+  - 50 services (incl. DefectCatalogService, ComponentTypeService, ProductComponentService)
   - 26 DAG engines
   - 6 MO services
   - 4 Component services
   - 1 Product service
-- **PSR-4 Classes:** 118 files in BGERP namespace
+- **PSR-4 Classes:** 121 files in BGERP namespace
 
 ### System Readiness Matrix (January 2025)
 

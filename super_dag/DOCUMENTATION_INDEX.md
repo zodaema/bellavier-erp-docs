@@ -1,10 +1,45 @@
 # SuperDAG Documentation Index
 
-**Last Updated:** January 2025 (Task 20-26 Complete)  
+**Last Updated:** December 2025 (Task 27 Complete)  
 **Purpose:** Index สำหรับเอกสาร SuperDAG ทั้งหมด
 
 > ⚠️ **NOTE:** Core documentation has been moved to `docs/developer/03-superdag/`  
 > This index remains for reference to tasks, tests, and archive.
+
+---
+
+## 📊 Quick Links - Current State
+
+- **[01-canonical/HATTHASILPA_CANONICAL_PRODUCTION_SPEC.md](01-canonical/HATTHASILPA_CANONICAL_PRODUCTION_SPEC.md)** ⭐ **LAW OF PHYSICS / MUST READ FIRST**
+- Canonical ontology for Hatthasilpa production; all specs must derive from this document.
+- **[SYSTEM_CURRENT_STATE.md](SYSTEM_CURRENT_STATE.md)** ⭐ - สถานะระบบปัจจุบัน (อ่านก่อน!)
+- **[tasks/MASTER_IMPLEMENTATION_ROADMAP.md](tasks/MASTER_IMPLEMENTATION_ROADMAP.md)** - Master Roadmap (All Phases Complete)
+
+---
+
+## 📋 Task 27 Results (December 2025)
+
+| Task | Description | Status | Results |
+|------|-------------|--------|---------|
+| 27.12 | Component Catalog | ✅ | Consolidated to 0001/0002 |
+| 27.13 | Component Node Type | ✅ | Consolidated to 0001/0002 |
+| 27.13.11b | Material Architecture V2 | ✅ | Consolidated to 0001/0002 |
+| 27.13.12 | Component Mapping Refactor | ✅ | [results](results/task27.13.12_component_mapping_refactor_results.md) |
+| 27.14 | Defect Catalog | ✅ | API + UI complete |
+| 27.15 | QC Rework V2 | ✅ | Service + Audit complete |
+| 27.16 | Graph Linter | ✅ | 15 rules implemented |
+| 27.17 | MCI (Missing Component Injection) | ✅ | Service complete |
+| 27.18 | Material Requirement | ✅ | [results](results/task27.18_material_requirement_results.md) |
+| 27.19 | Product Readiness System | ✅ | [results](results/task27.19_product_readiness_results.md) |
+| 27.20 | Work Modal Behavior | ✅ | [results](tasks/archive/results/task27.20_results.md) |
+| 27.21.1 | Rework Material Reserve Plan | ✅ | [results](tasks/archive/results/task27.21.1_results.md) |
+| 27.22 | Token Card Component Refactor | ✅ | Complete |
+| 27.22.1 | Token Card Logic Issues | ✅ | All 5 issues resolved |
+| 27.23 | Permission Engine Refactor | ✅ | Phase 0-4 Complete (Phase 5 deferred) |
+| 27.24 | Work Modal Refactor | ✅ | Complete |
+| 27.25 | Permission UI Improvement | ✅ | Complete |
+| 27.26 | DAG Routing API Refactor | ✅ | Phase 3 Complete + Golden Tests (Sub-Engines deferred) |
+| **Next** | Material Management | 📋 | [Roadmap](tasks/task_MATERIAL_MANAGEMENT_ROADMAP.md) + [Master Spec](specs/MATERIAL_PRODUCTION_MASTER_SPEC.md) |
 
 ---
 
@@ -192,7 +227,14 @@
 
 ### SPEC Documents (Specifications for Implementation)
 
-เอกสารเหล่านี้ถูกสร้างขึ้นจาก `REALITY_EVENT_IN_HOUSE.md` เพื่อเตรียม implement
+เอกสารเหล่านี้ถูกสร้างขึ้นจาก `REALITY_EVENT_IN_HOUSE.md` หรือจากการตกผลึกแนวคิด เพื่อเตรียม implement
+
+- **[specs/MATERIAL_PRODUCTION_MASTER_SPEC.md](specs/MATERIAL_PRODUCTION_MASTER_SPEC.md)** ⭐ **NEW (Dec 2025)**
+  - Master Specification สำหรับ Material & Production Management
+  - สองแนวทางการผลิต: Hatthasilpa Line (Component-level) และ Classic Line (MO-level)
+  - Over-cut management, Waste handling, Material Issue flow
+  - **Status**: Finalized Concept - Ready for Implementation
+  - **Last Updated**: December 2025
 
 - **[03-specs/SPEC_WORK_CENTER_BEHAVIOR.md](../developer/03-superdag/03-specs/SPEC_WORK_CENTER_BEHAVIOR.md)**
   - สเปก Work Center Behavior
@@ -264,6 +306,14 @@
   - **อัพเดทเมื่อ:** มีการเพิ่ม/แก้ไข tasks
   - **Status:** Task tracking document
   - **Location:** `docs/super_dag/task_index.md` (returned to original location)
+
+- **[tasks/task_MATERIAL_MANAGEMENT_ROADMAP.md](tasks/task_MATERIAL_MANAGEMENT_ROADMAP.md)** ⭐ **NEW (Dec 2025)**
+  - Implementation Roadmap สำหรับ Material Management
+  - Phase 1: Hatthasilpa CUT Node Enhancement
+  - Phase 2: Classic Line Material Issue
+  - Phase 3: Over-cut Management & Reporting
+  - **Status:** Planning - Ready to start Phase 1
+  - **Last Updated**: December 2025
 
 ### Archived Documents 📦
 

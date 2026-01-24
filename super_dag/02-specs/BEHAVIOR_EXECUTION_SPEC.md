@@ -382,6 +382,189 @@ function handleStitchComplete($tokenId, $nodeId) {
 - `cut_start` - Start batch
 - `cut_complete` - Complete batch with quantity
 
+---
+
+#### 5.2.1 Atelier Ideal: CUT = Component-first Sweep + Partial Release (Rule)
+
+**Factory Reality (Hatthasilpa Atelier):**
+- ช่างตัดมัก “กวาดตัดทีละ component” (เช่น BODY 10 ชิ้น) ไม่ได้ทำ “ครบทั้งใบทีละใบ”
+- ต้องปล่อยให้ node ถัดไปเริ่มงานได้ก่อน (เช่น EDGE/PAINT ของ BODY) โดยไม่ต้องรอ FLAP/STRAP
+
+**UI Law (Non-negotiable):**
+- หน้าแรก Work Queue = **Job-level cards เท่านั้น**
+- รายละเอียดงานย่อย/requirement ต่อ component อยู่ใน **Modal/Detail**
+
+**New CUT Actions (Target contract):**
+- `cut_batch_yield_save`:
+  - บันทึก “ตัดได้เพิ่ม” ต่อ `component_code`
+  - ถ้าเกิน requirement → ต้องมี `overshoot_reason`
+- `cut_batch_release`:
+  - ปล่อย X units ของ `component_code` ไป node ถัดไป (partial release)
+  - ทำแบบ idempotent
+
+**Determinism & Routing:**
+- ถ้า job/token pinned (`graph_version`) → resolve node ถัดไปต้องอ่านจาก pinned snapshot
+
+**Canonical Logging (SSOT):**
+- ทุก yield/release ต้อง persist เป็น canonical events (ผ่าน `TokenEventService`) เพื่อ audit + idempotency
+
+---
+
+#### 5.2.2 “CUT Partial Release Law” (1-page rule for all devs)
+
+> เป้าหมาย: ให้ “ตัด BODY 10 ชิ้นก่อน แล้วปล่อยไป EDGE/PAINT ทันที” ทำได้จริง  
+> โดย UI หน้าแรกยังเป็น job-level card และระบบ deterministic + idempotent
+
+##### A) Entities (SSOT model)
+
+- **Final token**: `flow_token.token_type='piece'` (1 ใบ = 1 token)
+- **Component token**: `flow_token.token_type='component'` (1 component ต่อ 1 ใบ = 1 token)
+  - SSOT ของ component identity = `flow_token.component_code`
+  - Relationship = `parent_token_id` (ห้ามใช้ serial pattern)
+- **Batch token (optional)**: `flow_token.token_type='batch'`
+  - ใช้เพื่อ “จับเวลา/การเริ่มงาน CUT” แบบสถานีตัด (PER_BATCH)
+  - ไม่ใช่ตัวแทน “จำนวนชิ้นที่ปล่อยไปขั้นถัดไป”
+
+**Reality check (จากระบบปัจจุบัน):**
+- `TokenLifecycleService::spawnTokens()` สร้างได้แค่ `batch` หรือ `piece` ตอน job creation (ยัง **ไม่** pre-spawn component tokens)
+- component tokens ในระบบมีได้ 2 ทาง:
+  - จาก native parallel split runtime (Task 30.3)
+  - จาก `BGERP\Dag\ComponentInjectionService` (Task 27.17) สำหรับ “missing component” และรองรับ idempotency/audit
+
+##### B) What is “Partial Release”?
+
+“Partial release” = การ route/move **component tokens** ของ `component_code` จำนวน X ไป node ถัดไป  
+โดย **ไม่ต้องรอ** component อื่น (FLAP/STRAP) และไม่ต้องให้ final token ไปต่อทั้งใบ
+
+##### C) Two operations (must be separate)
+
+1) **Yield (บันทึกว่าตัดได้เพิ่ม)**: `cut_batch_yield_save`
+- Inputs (minimum):
+  - `job_ticket_id`, `node_id` (CUT), `component_code`
+  - `cut_delta_qty` (>= 0)
+  - `material_context` (optional)
+  - `overshoot_reason` (required if new total exceeds requirement)
+- Output:
+  - Updated summary per component: required / cut_done / released / available_to_release
+
+2) **Release (ปล่อยไป node ถัดไป)**: `cut_batch_release`
+- Inputs (minimum):
+  - `job_ticket_id`, `node_id` (CUT), `component_code`
+  - `release_qty` (>= 1)
+- Preconditions:
+  - `available_to_release_qty >= release_qty`
+  - resolve next node via **pinned snapshot** when pinned
+- Effect:
+  - route/move component tokens จำนวน `release_qty` ไป node ถัดไปของ branch นั้น
+
+##### D) Deterministic selection rule (no “random token”)
+
+เมื่อปล่อย `component_code=BODY` จำนวน X:
+- query component tokens ที่:
+  - อยู่ใน job เดียวกัน
+  - `token_type='component'` + `component_code='BODY'`
+  - `current_node_id = CUT_NODE_ID` และ status พร้อมปล่อย (เช่น `ready`)
+- เลือก X ตัวด้วย order ที่ deterministic เสมอ เช่น:
+  - `ORDER BY id_token ASC` (recommended baseline)
+
+##### D.1 Component tokens “ต้องมีอยู่” ก่อนจะ release ได้ (สร้างแบบ deterministic)
+
+สำหรับ `cut_batch_release` ระบบต้อง “มั่นใจว่ามี component tokens ที่ represent งานนั้น” ก่อนจะ move:
+- ถ้า component token ยังไม่มี → ต้องสร้างแบบ deterministic และ idempotent
+- แนวทางที่ align กับระบบปัจจุบันมากที่สุด:
+  - ใช้ `ComponentInjectionService` เพื่อสร้าง component token ต่อ `parent_token_id` (final/piece) + `component_code`
+  - ทำแบบ bulk ตามจำนวน `release_qty` ที่ต้องการ (เลือก parent tokens X ใบก่อน แล้ว inject BODY ให้แต่ละใบ)
+
+> กฎสำคัญ: UI ไม่ต้องเห็น token ทีละใบ แต่ runtime ต้องมีตัวแทน token ที่ชัดเจนเพื่อให้ node ถัดไป “เริ่มทำได้จริง”
+
+##### E) Idempotency (must)
+
+ทั้ง `yield_save` และ `release` ต้องรองรับ retry/เน็ตเด้ง/กดซ้ำ:
+- client ส่ง `idempotency_key` ทุกครั้ง
+- backend ต้องทำ **at-most-once effect**
+- SSOT ของการ dedupe = canonical events (`token_event.idempotency_key`)
+
+##### F) Canonical events (SSOT for audit + aggregation)
+
+งาน CUT แบบ Atelier ต้องมี canonical events อย่างน้อย:
+- `NODE_YIELD` (payload: component_code, cut_delta_qty, overshoot_qty, overshoot_reason, material_context)
+- `NODE_RELEASE` (payload: component_code, release_qty, selected_token_ids[], to_node_id)
+
+> ข้อห้าม: ห้ามเอา “จำนวนที่ตัด/ปล่อย” ไปเก็บใน `flow_token.qty` แบบ ad-hoc เพื่อเลี่ยง audit และจะทำให้ระบบมั่วในอนาคต
+
+**Reality check (TokenEventService constraints):**
+- `BGERP\Dag\TokenEventService` มี canonical whitelist + mapping ไป `token_event.event_type` enum
+- `token_event.event_type` มี enum `'move'` อยู่แล้ว → แนะนำ map:
+  - `NODE_YIELD` → `event_type='move'`
+  - `NODE_RELEASE` → `event_type='move'`
+  - แล้วเก็บ canonical_type + payload ลง `event_data` (ตาม pattern ของ TokenEventService)
+- ดังนั้น implementation ต้อง “เพิ่ม canonical types + mapping” ใน `TokenEventService` ให้ครบ (ไม่เช่นนั้นจะถูก skip)
+
+##### F.1 SSOT ของ requirement (สิ่งที่ต้อง “pin” ให้ได้)
+
+`available_to_release_qty` ต้องคำนวณจาก:
+- **required_qty ต่อ component_code** (ต่อ job)
+- cut_done_qty (สะสมจาก NODE_YIELD)
+- released_qty (สะสมจาก NODE_RELEASE)
+
+**Reality check (จากระบบปัจจุบัน):**
+- ระบบมี “snapshot” ใน `product_revision.snapshot_json` (`ProductRevisionService::buildRuntimeSnapshot()`)
+  - มี `structure.components[]` (component_code, name, materials…)
+  - มี `graph.component_mapping` (anchor_slot ↔ component_code) แบบ snapshot ได้
+- แต่ “required_qty ต่อ component_code” (เช่น BODY อาจมี 1 ชิ้น/ใบ หรือหลายชิ้น/ใบ) ยังไม่ได้ถูกระบุเป็น section มาตรฐานใน snapshot schema ปัจจุบัน
+
+**Law:** งาน CUT partial release ของ pinned job ต้องใช้ requirement ที่มาจาก revision snapshot (ห้ามอ่าน live mapping เพื่อกัน drift)  
+ดังนั้นก่อน implement จริง ต้องเพิ่ม section ใหม่ใน snapshot (เช่น `structure.component_requirements[]`) หรือ snapshot `product_component_mapping` เข้า revision ให้ครบ
+
+##### F.2 Mapping component_code → branch/node ถัดไป (deterministic)
+
+**Law:** เมื่อ pinned ต้อง resolve “node ถัดไปของ BODY branch” จาก snapshot เท่านั้น
+
+แหล่งข้อมูลที่ระบบปัจจุบัน support:
+- `product_revision.snapshot_json.graph.component_mapping.mappings[]` (anchor_slot + component_code)
+
+ข้อห้าม:
+- ห้าม assume `anchor_slot == component_code` (แม้โค้ดบางส่วนจะทำแบบนั้นอยู่) เพราะจะพังเมื่อใช้ anchor slot แบบ SLOT_A/SLOT_B
+
+##### H) Concurrency & locking (release พร้อมกัน)
+
+`cut_batch_release` ต้องเป็น transaction เดียวที่:
+1) อ่าน summary (cut_done/released/available) แล้ว validate
+2) เลือก parent tokens X ใบ + ensure component tokens exist (inject idempotent)
+3) move/route component tokens X ตัวไป node ถัดไป
+4) persist `NODE_RELEASE` canonical event
+
+**Locking rule:** ต้อง lock ชุด token ที่กำลังเลือก (เช่น SELECT … FOR UPDATE) เพื่อกัน “ปล่อยเกิน available” เมื่อมี 2 request แข่งกัน
+
+##### G) What the downstream station sees
+
+เมื่อ `NODE_RELEASE` สำเร็จ:
+- node ถัดไป (EDGE/PAINT ของ BODY) จะ “เห็นงานเพิ่ม” ทันที เพราะ component tokens เดินมาถึง node นั้นแล้ว
+- UI หน้าแรก downstream สามารถเป็น job-level card เหมือนเดิม แล้วตัวเลข “available” เพิ่มขึ้น
+
+---
+
+#### 5.2.3 Batch Interleaving Policy (Answer: merge vs new card)
+
+> คำถาม: Batch แรกถูกปล่อยจาก CUT แล้วกำลังทำอยู่ ถ้า batch ถัดไปมาแทรก จะทำอย่างไร?
+
+**Rule (recommended): รวม Card เดิม (merge) ไม่แตก Card ใหม่**
+
+เหตุผล:
+- ผู้ใช้ต้องคิดเป็น “งานใหญ่ของรุ่น/ล็อตนี้” ไม่ใช่ “batch ย่อยกองเต็มหน้าจอ”
+- batch ย่อยที่ “มาเพิ่ม” ควรสะท้อนเป็น “จำนวน available เพิ่มขึ้น” ใน card เดิม
+
+**Card Aggregation Key (ต้องยึดร่วมกัน):**
+- หน้าแรก Work Queue (job-level): group ด้วย `(job_ticket_id, work_center_id, current_node_id)`
+  - ถ้าเป็นงานเดียวกัน + สถานีเดียวกัน + node เดียวกัน → **ต้องรวม card**
+  - ถ้าคนละ `job_ticket_id` → card ใหม่
+  - ถ้าคนละ node (เช่น BODY_EDGE vs FLAP_EDGE) → แยก card (เพราะงาน/skill ต่างกัน)
+
+**In-modal detail (แสดง batch history ได้ แต่ไม่ต้องแตก card):**
+- ภายใน modal สามารถแสดง “Release history” เป็น list events (เวลา/จำนวน/ผู้ปล่อย)
+- เพิ่ม indicator “New items arrived” เมื่อมี release ใหม่เข้ามาขณะกำลังทำงานอยู่
+
+
 **Lifecycle Integration:**
 
 ```php
@@ -402,11 +585,9 @@ function handleCutComplete($tokenId, $nodeId, $formData) {
     // 3. Complete session
     $this->sessionService->completeToken($tokenId, $this->workerId);
     
-    // 4. Update batch quantity
-    // TODO: Move to dedicated service (BatchService or TokenLifecycleService::setQuantity)
-    // Current implementation (legacy):
-    $this->db->query("UPDATE flow_token SET qty = ? WHERE id_token = ?", [$cutQty, $tokenId]);
-    // Target: $this->batchService->setBatchQuantity($tokenId, $cutQty);
+    // 4. Update batch quantity (spec rule)
+    // ❌ Do NOT update DB directly from behavior
+    // ✅ Use a dedicated service (e.g., BatchService / TokenLifecycleService) + prepared statements
     
     // 5. Call lifecycle (normal node only - CUT never at split/merge)
     $result = $this->lifecycleService->completeNode($tokenId, $nodeId);

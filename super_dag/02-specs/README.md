@@ -5,6 +5,12 @@
 
 ---
 
+## ⚠️ Canonical Law (Must Read First)
+
+**Source of Truth:** `docs/super_dag/01-canonical/HATTHASILPA_CANONICAL_PRODUCTION_SPEC.md`
+
+**Rule:** ทุก spec ในโฟลเดอร์นี้ต้อง **derive จาก Canonical** และต้องไม่ขัดกับเอกสาร Canonical เด็ดขาด
+
 ## Naming Convention
 
 `TOPIC_NAME_SPEC.md` หรือ `TOPIC_NAME.md` (ไม่มีวันที่)

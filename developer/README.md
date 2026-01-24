@@ -126,6 +126,14 @@ If you're an AI agent (Cursor, ChatGPT, etc.):
 - Step-by-step workflow
 - Examples of allowed/forbidden changes
 
+### Step 5: Implementation Checklist (Every PR / Every Feature)
+**File:** `docs/developer/02-quick-start/IMPLEMENTATION_EVERY_TIME_CHECKLIST.md`
+
+Use this when implementing or refactoring anything that touches:
+- APIs (bootstrap / CSRF / rate limit / validation)
+- Frontend JS (BG.api.request / BG.ui helpers)
+- Database write semantics (DatabaseHelper::execute() return value)
+
 ---
 
 ## Documentation Index
@@ -140,6 +148,7 @@ If you're an AI agent (Cursor, ChatGPT, etc.):
 | `02-quick-start/QUICK_START.md` | Setup and run guide |
 | `02-quick-start/GLOBAL_HELPERS.md` | Helper functions reference |
 | `02-quick-start/AI_QUICK_START.md` | AI agent quick start guide |
+| `02-quick-start/IMPLEMENTATION_EVERY_TIME_CHECKLIST.md` | MUST-do checklist for every implementation |
 | `chapter.md` | Master structure for all chapters |
 | `chapters/` | Detailed chapter documentation (15 chapters) |
 
@@ -327,6 +336,18 @@ If you're an AI agent (Cursor, ChatGPT, etc.):
 - ✅ **Task 18**: Security review & hardening (audit complete)
 - ✅ **Task 19**: PSR-4 helper migration (PermissionHelper, BootstrapMigrations)
 - ✅ **Task 20**: Tenant API JSON output enforcement (TenantApiOutput)
+
+### Completed Tasks (Task 27 Series - December 2025)
+
+- ✅ **Task 27.20**: Work Modal Behavior - Complete
+- ✅ **Task 27.21.1**: Rework Material Reserve Plan - Complete (All Phases 0-4)
+- ✅ **Task 27.22**: Token Card Component Refactor - Complete
+- ✅ **Task 27.22.1**: Token Card Logic Issues - Complete (All 5 issues resolved)
+- ✅ **Task 27.23**: Permission Engine Refactor - Phase 0-4 Complete (Phase 5 deferred)
+- ✅ **Task 27.24**: Work Modal Refactor - Complete
+- ✅ **Task 27.25**: Permission UI Improvement - Complete
+
+**See:** `docs/super_dag/tasks/TASK_PRIORITY_ANALYSIS.md` for detailed status
 
 ### System State
 

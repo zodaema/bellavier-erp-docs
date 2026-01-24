@@ -1,6 +1,6 @@
 {
-  "version": "1.0",
-  "generated_at": "2025-11-07T23:58:00Z",
+  "version": "1.1",
+  "generated_at": "2025-12-06T03:30:00Z",
   "apis": {
     "team_api": {
       "file": "source/team_api.php",
@@ -117,6 +117,29 @@
       "supports_pagination": false,
       "supports_filtering": false,
       "rate_limit": 300
+    },
+    "defect_catalog_api": {
+      "file": "source/defect_catalog_api.php",
+      "version": "1.0",
+      "lifecycle": "admin",
+      "actions": [
+        "list",
+        "get",
+        "create",
+        "update",
+        "delete",
+        "categories",
+        "for_component_type",
+        "suggest_rework",
+        "component_types",
+        "statistics"
+      ],
+      "requires": ["auth", "tenant_scope"],
+      "permissions": ["defect.catalog.view", "defect.catalog.manage"],
+      "idempotency_required": ["create"],
+      "supports_pagination": false,
+      "supports_filtering": true,
+      "rate_limit": 60
     }
   }
 }

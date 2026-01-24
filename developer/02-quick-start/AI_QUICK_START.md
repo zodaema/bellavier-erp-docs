@@ -69,6 +69,7 @@ This document provides essential guidelines for AI agents working on the Bellavi
 - ✅ Bootstrap docs (if bootstrap changed)
 - ✅ Developer docs (if workflow changed)
 - ✅ CHANGELOG (if significant change)
+- ✅ Implementation checklist (if new standard helpers/patterns were added): `docs/developer/02-quick-start/IMPLEMENTATION_EVERY_TIME_CHECKLIST.md`
 
 **DO NOT:**
 - ❌ Leave documentation outdated
@@ -221,7 +222,7 @@ echo "ไลน์ผลิต";
 - All modals must reset state using a dedicated `resetXYZModal()` function.
 - All pages must have one entry JS file only (per page).
 - All backend-facing JS calls MUST use:
-  - `fetchJson()` helper
+  - `BG.api.request()` helper (from `assets/javascripts/global_script.js`)
   - Standard response format `{ ok: true/false }`
 - All new UI features must support i18n out of the box.
 

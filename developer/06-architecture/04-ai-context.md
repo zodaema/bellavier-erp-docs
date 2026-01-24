@@ -1,248 +1,248 @@
 # 🤖 Context for Future AI Agents
 
 **Created:** November 2, 2025  
-**Purpose:** Critical context for AI agents working on this codebase in the future  
-**Read This:** Before making any major architectural decisions
+**Last Updated:** December 6, 2025  
+**Purpose:** Critical context for AI agents working on this codebase  
+**Read This:** Before making any major changes
 
 ---
 
-## 🎯 **Strategic Direction (READ THIS FIRST!)**
+## 🎯 **Current System State (December 2025)**
 
-### **⚠️ CRITICAL: Linear System is Temporary**
-
-**Current State (Nov 2, 2025):**
+### **System is Production Ready:**
 ```
-✅ Dual-Mode System Active
-   ├─ Linear (task-based) = Safety net / Fallback
-   └─ DAG (graph-based) = Future production system
-```
+✅ SuperDAG Engine - Complete (Token flow, parallel execution, self-healing)
+✅ Component Architecture V2 - Complete (3-layer model)
+✅ Product Readiness - Complete (Configuration validation)
+✅ Material Requirement - Complete (Backend: calculate, reserve, allocate)
+✅ QC Rework V2 - Complete (Component-aware, defect-based)
+✅ Graph Linter - Complete (30+ validation rules)
+✅ MCI (Component Injection) - Complete
 
-**Future State (Q3 2026):**
-```
-✅ Single-Mode System
-   └─ DAG Only = Production system
-```
-
-### **Why This Matters:**
-
-1. **Don't optimize Linear code** - It will be deleted soon
-2. **Don't add Linear features** - Focus on DAG
-3. **Don't assume dual-mode is permanent** - It's temporary migration strategy
-4. **Always check removal timeline** - See `docs/guide/LINEAR_DEPRECATION_GUIDE.md`
-
----
-
-## 📊 **System Evolution Timeline**
-
-### **2025 Q3: Pre-DAG Era**
-```
-Single System: Linear Task-Based
-├─ atelier_job_ticket
-├─ atelier_job_task (sequential)
-└─ atelier_wip_log
-
-Limitations:
-❌ No parallel work
-❌ No component assembly
-❌ No flexible rework
+✅ Node Behavior UI - Complete (Task 27.20)
+✅ Material Integration UI - Complete (Task 27.21)
+✅ Work Modal Refactor - Complete (Task 27.24)
+✅ Permission UI Improvement - Complete (Task 27.25)
+✅ Token Card Component Refactor - Complete (Task 27.22)
+✅ Token Card Logic Issues - Complete (Task 27.22.1)
+✅ Permission Engine Refactor - Phase 0-4 Complete (Task 27.23)
 ```
 
-### **2025 Q4 - 2026 Q2: Dual-Mode Era (NOW)**
-```
-Dual System: Linear + DAG Coexist
-├─ Linear (legacy)
-│   ├─ atelier_job_task
-│   └─ atelier_wip_log
-└─ DAG (future)
-    ├─ routing_graph
-    ├─ routing_node
-    ├─ flow_token
-    └─ token_event
-
-Purpose:
-✅ Safe migration path
-✅ Rollback capability
-✅ User training period
-```
-
-### **2026 Q3+: DAG-Only Era (GOAL)**
-```
-Single System: DAG Graph-Based
-├─ routing_graph
-├─ routing_node
-├─ flow_token
-└─ token_event
-
-Benefits:
-✅ Parallel execution
-✅ Component assembly
-✅ Flexible routing
-✅ Simpler codebase
-```
+### **What's Working:**
+- ✅ Dual production lines (Hatthasilpa/DAG + Classic/Linear)
+- ✅ Token-based tracking for Hatthasilpa
+- ✅ WIP log-based tracking for Classic
+- ✅ Component Mapping (graph anchor → product component)
+- ✅ Product Readiness validation
+- ✅ Material Requirement calculation (backend)
+- ✅ 104+ tests passing
 
 ---
 
 ## 🔍 **How to Identify System Version**
 
-### **If You See:**
-
-**⚠️ Deprecated (Task 25.3-25.5):**
+### **Check Production Line:**
 ```php
-// OLD (Deprecated):
-if ($ticket['routing_mode'] === 'linear') { /* old system */ }
-elseif ($ticket['routing_mode'] === 'dag') { /* new system */ }
-
-// Database
-SELECT routing_mode FROM job_ticket; -- Classic DAG was deprecated
-```
-→ **Classic DAG mode was removed. Classic uses Linear only.**
-
-**Current System (Post Task 25.5):**
-```php
-// Classic Line
-if ($ticket['production_type'] === 'classic') {
-    // routing_mode = 'linear' ONLY (DAG deprecated)
-    // No graph binding, no DAG tables
-}
-
-// Hatthasilpa Line
-if ($ticket['production_type'] === 'hatthasilpa') {
-    // routing_mode = 'dag' REQUIRED
+// Product determines routing mode
+if ($product['production_line'] === 'hatthasilpa') {
+    // Uses DAG routing
     // Graph binding required
-    // Uses flow_token, token_event, etc.
+    // Component mapping required
+    // Token-based tracking
+}
+
+if ($product['production_line'] === 'classic') {
+    // Uses Linear routing
+    // No graph binding (deprecated)
+    // Component Mapping tab hidden
+    // WIP log-based tracking
 }
 ```
-→ **System uses production_type to determine routing mode**
 
----
+### **Check Token vs WIP:**
+```php
+// Hatthasilpa uses tokens
+$tokens = db_fetch_all($db, "SELECT * FROM flow_token WHERE id_job = ?", [$jobId]);
 
-## 🎓 **Key Architectural Decisions**
-
-### **Decision 1: Why Not "Linear + Parallel Groups"?**
-
-**We considered:**
-```sql
-ALTER TABLE atelier_job_task 
-ADD COLUMN parallel_group INT NULL;
-
--- Task 1: Group 1 (sequential)
--- Task 2: Group 2 (parallel) \
--- Task 3: Group 2 (parallel)  } These run together
--- Task 4: Group 3 (sequential, waits for Group 2)
+// Classic uses WIP logs
+$logs = db_fetch_all($db, "SELECT * FROM atelier_wip_log WHERE id_job_ticket = ? AND deleted_at IS NULL", [$ticketId]);
 ```
-
-**Rejected because:**
-- ❌ Still can't do component assembly (join nodes)
-- ❌ Still can't do conditional routing
-- ❌ Still can't track individual pieces (tokens)
-- ❌ Complex rework flows not supported
-
-**Chose DAG instead:**
-- ✅ Full flexibility
-- ✅ Token-based tracking
-- ✅ Split/Join nodes
-- ✅ Conditional edges
-- ✅ Industry standard (Airflow, Temporal use DAGs)
-
-### **Decision 2: Why Keep Dual-Mode Temporarily?**
-
-**Why not switch directly to DAG?**
-- ❌ Too risky (production system)
-- ❌ Users need training time
-- ❌ Need to verify DAG stability
-- ❌ Legal requirement (data retention)
-
-**Dual-mode benefits:**
-- ✅ Zero downtime migration
-- ✅ Can rollback if issues
-- ✅ Gradual user adoption
-- ✅ Compare performance before/after
-
-### **Decision 3: PWA Design for Operators**
-
-**Why simplified DAG view in PWA?**
-```
-Operators don't need to see:
-❌ Full graph structure
-❌ Split/join logic
-❌ Conditional routing rules
-
-Operators only need:
-✅ "3 tokens at SEW_BODY"
-✅ "Next: Will route to ASSEMBLY"
-✅ Start/Complete buttons
-```
-
-**Reasoning:**
-- Shop floor operators aren't graph experts
-- They just need to know "what's ready to work on"
-- Complex routing handled automatically by system
-- Desktop interface for supervisors/planners
 
 ---
 
 ## 📚 **Essential Reading Order**
 
 ### **For Understanding Current System:**
-1. `docs/BELLAVIER_DAG_CORE_TODO.md` - Architecture overview
-2. `docs/BELLAVIER_DAG_RUNTIME_FLOW.md` - How tokens flow
-3. `docs/BELLAVIER_DAG_INTEGRATION_NOTES.md` - UI/API integration
+1. `docs/super_dag/SYSTEM_CURRENT_STATE.md` - Current state overview
+2. `docs/super_dag/DOCUMENTATION_INDEX.md` - Full documentation index
+3. `docs/super_dag/01-concepts/PRODUCT_COMPONENT_ARCHITECTURE.md` - Component model
 4. `docs/DATABASE_SCHEMA_REFERENCE.md` - Table structures
 
-### **For Understanding Migration:**
-1. `docs/BELLAVIER_DAG_MIGRATION_PLAN.md` - Migration strategy
-2. `docs/guide/LINEAR_DEPRECATION_GUIDE.md` - Removal plan
-3. `DAG_DEVELOPMENT_PLAN.md` - Current development roadmap
+### **For Understanding Tasks:**
+1. `docs/super_dag/tasks/MASTER_IMPLEMENTATION_ROADMAP.md` - Roadmap
+2. `docs/super_dag/tasks/TASK_PRIORITY_ANALYSIS.md` - Current task status
+3. `docs/super_dag/tasks/task27.20_WORK_MODAL_BEHAVIOR.md` - ✅ Complete
+4. `docs/super_dag/tasks/task27.21.1_REWORK_MATERIAL_RESERVE_PLAN.md` - ✅ Complete
+5. `docs/super_dag/tasks/task27.22_TOKEN_CARD_COMPONENT_REFACTOR.md` - ✅ Complete
+6. `docs/super_dag/tasks/task27.22.1_TOKEN_CARD_LOGIC_ISSUES.md` - ✅ Complete
+7. `docs/super_dag/tasks/task27.23_PERMISSION_ENGINE_REFACTOR.md` - Phase 0-4 Complete
+8. `docs/super_dag/tasks/task27.24_WORK_MODAL_REFACTOR.md` - ✅ Complete
+9. `docs/super_dag/tasks/task27.25_PERMISSION_UI_IMPROVEMENT.md` - ✅ Complete
 
 ### **For Making Changes:**
-1. `AI_GUIDE.md` - General AI agent guide
-2. `docs/SERVICE_API_REFERENCE.md` - API documentation
-3. `.cursorrules` - Coding standards
+1. `docs/DEVELOPER_POLICY.md` - Coding standards
+2. `docs/developer/02-api-development/` - API development guide
+3. `.cursorrules` - Project rules
+
+---
+
+## 🎓 **Key Architectural Decisions**
+
+### **Decision 1: 3-Layer Component Architecture**
+
+**Structure:**
+```
+Layer 1: component_type_catalog (Generic Types)
+├─ 24 types: BODY, FLAP, STRAP, HANDLE, LINING, etc.
+├─ Used in Graph Designer as anchor_slot
+└─ Fixed catalog - rarely changes
+
+Layer 2: product_component (Product-Specific)
+├─ Per-product components: "BODY สำหรับ Aimee Mini สีเขียว"
+├─ Links to Layer 1 type
+└─ Created in Product → Components tab
+
+Layer 3: product_component_material (BOM)
+├─ Materials for each component
+├─ Quantity, UoM, waste factor
+└─ Used for material requirement calculation
+```
+
+**Why this structure:**
+- ✅ Separates generic types from product-specific components
+- ✅ Allows same graph to work with different products
+- ✅ BOM tied to component, not product directly
+- ✅ Component Mapping connects graph to product
+
+### **Decision 2: Reserve Materials at Job Creation**
+
+**Flow:**
+```
+Job Creation
+    ↓
+1. Calculate BOM requirements (qty × BOM per piece)
+2. Check available stock (on_hand - reserved)
+3. Reserve materials (material_reservation)
+    ↓
+Job Execution
+    ↓
+4. Allocate at CUT node (material_allocation)
+5. Consume when complete
+```
+
+**Why at Job Creation:**
+- ✅ Prevents "double-booking" of materials
+- ✅ Shows accurate availability for new jobs
+- ✅ Planners see shortage warnings early
+- ✅ No race conditions when multiple jobs start
+
+### **Decision 3: Product Readiness Validation**
+
+**Criteria (Hatthasilpa):**
+```
+✓ Production Line = 'hatthasilpa'
+✓ Graph Binding (has bound graph)
+✓ Graph Published
+✓ Graph has START node
+✓ Has Components (at least 1)
+✓ Each Component has Materials (BOM)
+✓ Component Mapping complete (all anchor_slots mapped)
+```
+
+**Criteria (Classic):**
+```
+✓ Production Line = 'classic'
+✓ Has Components (at least 1)
+✓ Each Component has Materials (BOM)
+```
+
+**Why:**
+- ✅ Prevents job creation from incomplete products
+- ✅ Ensures all downstream systems work correctly
+- ✅ Clear feedback to users about what's missing
 
 ---
 
 ## 🚨 **Common Mistakes to Avoid**
 
-### **Mistake 1: Assuming Dual-Mode is Permanent**
-```
-❌ "Let's add a config flag for routing_mode preference"
-❌ "Let's optimize both Linear and DAG equally"
-❌ "Let's create a UI to switch between systems"
+### **Mistake 1: Forgetting i18n**
+```php
+// ❌ WRONG - Hardcoded Thai
+json_error('วัสดุไม่เพียงพอ', 400);
 
-✅ "Focus on DAG. Linear is temporary safety net."
-```
-
-### **Mistake 2: Breaking Linear During DAG Development**
-```
-❌ "Let's refactor atelier_wip_log to merge with token_event"
-❌ "Let's remove routing_mode column to simplify"
-❌ "Let's force all jobs to use DAG"
-
-✅ "Keep Linear working until verified safe to remove"
-✅ "DAG tables are separate - no schema conflicts"
-✅ "Test Linear jobs after every DAG change"
+// ✅ CORRECT - English default with translation key
+json_error(translate('material.shortage', 'Material shortage'), 400);
 ```
 
-### **Mistake 3: Not Checking Removal Timeline**
-```
-❌ "Should we add Linear features? I don't see removal date"
-❌ "Linear seems stable, why remove it?"
-❌ "Users might prefer Linear for simple jobs"
+```javascript
+// ❌ WRONG
+notifyError('วัสดุไม่เพียงพอ');
 
-✅ Read: docs/guide/LINEAR_DEPRECATION_GUIDE.md
-✅ Check: Target removal date (Q3 2026)
-✅ Understand: Dual-mode = technical debt
+// ✅ CORRECT
+notifyError(t('material.shortage', 'Material shortage'));
 ```
 
-### **Mistake 4: Optimizing the Wrong System**
-```
-❌ "Let's add indexes to atelier_job_task" (will be deleted)
-❌ "Let's rewrite OperatorSessionService for Linear" (legacy)
-❌ "Let's create Linear->Parallel migration tool" (unnecessary)
+### **Mistake 2: Wrong Column Names**
+```php
+// ❌ WRONG - Old column name
+SELECT pc.component_type FROM product_component pc
 
-✅ Optimize DAG performance instead
-✅ Improve DAG user experience
-✅ Write migration tools (Linear→DAG)
+// ✅ CORRECT - Current column name
+SELECT pc.component_type_code FROM product_component pc
+```
+
+```php
+// ❌ WRONG - Old column name
+SELECT ct.type_group FROM component_type_catalog ct
+
+// ✅ CORRECT - Current column name
+SELECT ct.category FROM component_type_catalog ct
+```
+
+### **Mistake 3: Missing Soft-Delete Filter**
+```php
+// ❌ WRONG - No filter
+SELECT * FROM atelier_wip_log WHERE id_job_ticket = ?
+
+// ✅ CORRECT - Filter deleted
+SELECT * FROM atelier_wip_log WHERE id_job_ticket = ? AND deleted_at IS NULL
+```
+
+### **Mistake 4: Wrong API Response Check**
+```javascript
+// ❌ WRONG
+if (response.success) { ... }
+
+// ✅ CORRECT
+if (response.ok) { ... }
+```
+
+### **Mistake 5: bind_param Order**
+```php
+// ❌ WRONG - Parameters in wrong order
+$stmt = $db->prepare("INSERT INTO table (col_a, col_b) VALUES (?, ?)");
+$stmt->bind_param('ii', $b, $a);  // Wrong order!
+
+// ✅ CORRECT - Match SQL order
+$stmt->bind_param('ii', $a, $b);  // Match INSERT order
+```
+
+### **Mistake 6: Creating Features for Classic DAG**
+```
+❌ Classic DAG mode was deprecated in Task 25.3-25.5
+❌ Don't create graph binding features for Classic products
+✅ Classic uses Linear routing only (job_ticket → tasks → wip_logs)
+✅ Classic products hide Component Mapping tab
 ```
 
 ---
@@ -252,175 +252,213 @@ Operators only need:
 ### **When Adding New Features:**
 
 **Ask yourself:**
-1. Is this a DAG feature? → ✅ Go ahead
-2. Is this a Linear feature? → ❌ Don't add (will be deleted)
-3. Does this break dual-mode? → ❌ Don't do it yet
-4. Does this help migration? → ✅ Prioritize
+1. Does this affect Hatthasilpa, Classic, or both?
+2. Does this need i18n (translation)?
+3. Does this need API validation?
+4. Does this affect Product Readiness?
+5. Are there existing services/patterns to follow?
 
-### **When Fixing Bugs:**
+### **When Working on Material System:**
 
-**Linear bug:**
-- Is it critical? → ✅ Fix (users depend on it)
-- Is it minor? → ⏸️ Defer (will be deleted anyway)
-- Is it cosmetic? → ❌ Skip
-
-**DAG bug:**
-- Any severity → ✅ Fix immediately (this is the future)
-
-### **When Refactoring:**
-
-**Allowed:**
-- ✅ Refactor DAG code
-- ✅ Improve DAG services
-- ✅ Optimize DAG queries
-
-**Not Allowed:**
-- ❌ Refactor Linear code (temporary)
-- ❌ Merge Linear+DAG tables (keep separate)
-- ❌ Remove routing_mode checks (needed for dual-mode)
-
----
-
-## 💡 **Key Insights from Development**
-
-### **What Worked Well:**
-
-1. **Dual-Mode Strategy**
-   - Allowed zero-downtime migration
-   - Users could test DAG without pressure
-   - Could rollback if issues found
-
-2. **Separate Database Tables**
-   - No schema conflicts
-   - Easy to archive Linear data later
-   - Clear separation of concerns
-
-3. **Safety Test Script**
-   - `test_dual_mode_safety.php`
-   - Automated verification
-   - Gave confidence to proceed
-
-### **What We'd Do Differently:**
-
-1. **Earlier User Training**
-   - Should have trained users on DAG concepts earlier
-   - Graph terminology was confusing at first
-   - More visual documentation needed
-
-2. **Clearer Deprecation Timeline**
-   - Should have announced removal date from day 1
-   - Users thought dual-mode was permanent
-   - Created confusion about "which system to use"
-
-3. **Migration Tools**
-   - Should have built Linear→DAG converter earlier
-   - Manual migration was time-consuming
-   - Automated tool would save weeks
-
----
-
-## 📊 **System Health Metrics**
-
-### **How to Check if DAG is Ready to Replace Linear:**
-
-```sql
--- 1. DAG job success rate (target: >95%)
-SELECT 
-    COUNT(*) as total,
-    SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END) as completed,
-    ROUND(SUM(CASE WHEN status='completed' THEN 1 ELSE 0 END)/COUNT(*)*100,1) as success_rate
-FROM atelier_job_ticket
-WHERE routing_mode='dag' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH);
-
--- 2. Linear job activity (target: 0 in last 30 days)
-SELECT COUNT(*) as active_linear_jobs
-FROM atelier_wip_log
-WHERE deleted_at IS NULL 
-AND event_time >= DATE_SUB(NOW(), INTERVAL 30 DAY);
-
--- 3. User adoption (target: 100% on DAG)
-SELECT 
-    routing_mode,
-    COUNT(DISTINCT created_by) as unique_users
-FROM atelier_job_ticket
-WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-GROUP BY routing_mode;
+**Key formulas:**
+```
+available_for_new_jobs = on_hand - reserved
+required_qty = BOM_qty × job_qty × waste_factor
+shortage = MAX(0, required_qty - available)
 ```
 
-**Safe to remove Linear when:**
-- ✅ DAG success rate > 95% for 6+ months
-- ✅ No Linear job activity in 30+ days
-- ✅ All users comfortable with DAG
-- ✅ Management approval obtained
+**Services to use:**
+- `MaterialRequirementService` - Calculate requirements
+- `MaterialReservationService` - Reserve/release stock
+- `MaterialAllocationService` - Consume materials
+
+### **When Working on Node Behavior:**
+
+**Files to modify:**
+- `assets/javascripts/dag/behavior_ui_templates.js` - UI templates
+- `source/pwa_scan_v2_api.php` - API handlers
+- `assets/javascripts/pwa_scan/pwa_scan.js` - PWA integration
+
+**Existing behaviors:**
+- `CUT` - Material cutting, quantity input
+- `STITCH` - Sewing operations
+- `QC_PASS` - Quality check pass
+- `QC_FAIL` - Quality check fail + rework
+- More defined in `behavior_ui_templates.js`
+
+---
+
+## 📊 **Database Quick Reference**
+
+### **Core Tables (December 2025):**
+
+```sql
+-- Component Architecture V2
+component_type_catalog      -- 24 generic types
+product_component           -- Product-specific components
+product_component_material  -- BOM per component
+graph_component_mapping     -- anchor_slot → product_component
+
+-- Material System
+material_requirement        -- Calculated requirements
+material_reservation        -- Reserved stock
+material_allocation         -- Consumed materials
+v_material_available        -- Available stock view
+v_job_material_status       -- Job material summary view
+
+-- QC & Defect
+defect_category             -- 8 categories
+defect_catalog              -- 36 defects
+qc_rework_override_log      -- Supervisor override audit
+
+-- Audit
+product_config_log          -- Product config changes
+component_injection_log     -- MCI audit
+```
+
+### **Key Relationships:**
+```
+product
+    ↓
+product_component (via id_product)
+    ↓
+product_component_material (via id_product_component)
+    
+routing_graph
+    ↓
+routing_node (via id_graph)
+    ↓
+graph_component_mapping (via id_graph, anchor_slot)
+    ↓
+product_component (via id_product_component)
+```
+
+---
+
+## 🧪 **Testing Guidelines**
+
+### **Run Tests:**
+```bash
+# All tests
+vendor/bin/phpunit
+
+# Specific file
+vendor/bin/phpunit tests/Unit/ProductReadinessServiceTest.php
+
+# With coverage
+vendor/bin/phpunit --coverage-html coverage/
+```
+
+### **Test Patterns:**
+```php
+// Unit test
+public function testMaterialCalculation(): void {
+    $service = new MaterialRequirementService($this->db);
+    $result = $service->calculateForJob($jobId, $productId, 20);
+    
+    $this->assertArrayHasKey('requirements', $result);
+    $this->assertGreaterThan(0, count($result['requirements']));
+}
+
+// Integration test
+public function testProductReadinessAPI(): void {
+    $response = $this->callAPI('get_product_readiness', ['product_id' => 1]);
+    
+    $this->assertTrue($response['ok']);
+    $this->assertArrayHasKey('is_ready', $response);
+}
+```
 
 ---
 
 ## 🎯 **Your Mission (Future AI Agent)**
 
-### **If You're Working on This Codebase:**
+### **If Working on Task 27.20 (Work Modal Behavior):**
+1. Read: `docs/super_dag/tasks/task27.20_WORK_MODAL_BEHAVIOR.md` ✅ Complete
+2. See: `docs/super_dag/tasks/archive/results/task27.20_results.md`
+3. Files: `assets/javascripts/pwa_scan/WorkModalController.js`
 
-1. **Check the date** - Has Linear been removed yet?
-   - Yes → System is DAG-only (simpler)
-   - No → System is dual-mode (be careful)
+### **If Working on Task 27.21.1 (Rework Material Reserve):**
+1. Read: `docs/super_dag/tasks/task27.21.1_REWORK_MATERIAL_RESERVE_PLAN.md` ✅ Complete
+2. See: `docs/super_dag/tasks/archive/results/task27.21.1_results.md`
+3. Migration: `database/tenant_migrations/2025_12_rework_material_logging.php`
+4. Service: `source/BGERP/Service/MaterialAllocationService.php`
+5. API: `source/dag_token_api.php` (handleScrapMaterials integration)
 
-2. **Read the removal guide** - `docs/guide/LINEAR_DEPRECATION_GUIDE.md`
-   - Understand removal timeline
-   - Don't break migration path
+### **If Working on Task 27.22 (Token Card Component):**
+1. Read: `docs/super_dag/tasks/task27.22_TOKEN_CARD_COMPONENT_REFACTOR.md` ✅ Complete
+2. Files: `assets/javascripts/pwa_scan/token_card/TokenCardComponent.js`
+3. Architecture: Single component pattern (State → Parts → Layouts)
 
-3. **Focus on DAG** - That's the future
-   - Add DAG features
-   - Optimize DAG performance
-   - Improve DAG UX
+### **If Working on Task 27.22.1 (Token Card Logic Issues):**
+1. Read: `docs/super_dag/tasks/task27.22.1_TOKEN_CARD_LOGIC_ISSUES.md` ✅ Complete
+2. See: `docs/super_dag/00-audit/` for audit reports
+3. Specs: `docs/super_dag/specs/QC_POLICY_RULES.md`
 
-4. **Keep Linear working** - Until removal date
-   - Don't break it
-   - Don't optimize it
-   - Just maintain it
+### **If Working on Task 27.23 (Permission Engine):**
+1. Read: `docs/super_dag/tasks/task27.23_PERMISSION_ENGINE_REFACTOR.md` (Phase 0-4 Complete)
+2. Service: `source/BGERP/Service/PermissionEngine.php`
+3. Pattern: `ACTION_PERMISSIONS` mapping in API files
 
-5. **Help migration** - Accelerate Linear→DAG transition
-   - Build migration tools
-   - Write conversion scripts
-   - Train users
+### **If Working on Task 27.24 (Work Modal Refactor):**
+1. Read: `docs/super_dag/tasks/task27.24_WORK_MODAL_REFACTOR.md` ✅ Complete
+2. Files: `assets/javascripts/pwa_scan/WorkModalController.js`
+
+### **If Working on Task 27.25 (Permission UI):**
+1. Read: `docs/super_dag/tasks/task27.25_PERMISSION_UI_IMPROVEMENT.md` ✅ Complete
+
+### **If Working on New Feature:**
+1. Check: Is similar feature implemented?
+2. Read: `docs/DEVELOPER_POLICY.md`
+3. Follow: Existing patterns
+4. Test: Write unit tests
+5. Document: Update relevant .md files
 
 ---
 
 ## 📞 **Need Help?**
 
 ### **Read These Files:**
-1. `AI_GUIDE.md` - General guidance for AI agents
-2. `docs/INDEX.md` - Documentation index
-3. `ROADMAP_V3.md` - Project roadmap
+1. `docs/DEVELOPER_POLICY.md` - Coding standards
+2. `docs/super_dag/DOCUMENTATION_INDEX.md` - SuperDAG docs
+3. `.cursorrules` - Project rules
 
-### **Check These Memories:**
-- Memory: "Bellavier ERP - Quick Reference Card"
-- Memory: "DAG Implementation Checklist"
-- Memory: "Linear System Deprecation Plan"
-
-### **Run These Tests:**
+### **Run These Checks:**
 ```bash
-# Verify system state
-php test_dual_mode_safety.php default
+# Syntax check
+php -l source/your_file.php
 
-# Check DAG health
-php test_dag_token_api.php default
+# Tests
+vendor/bin/phpunit
 
-# Verify Linear still works
-# (manual test via browser)
+# Lints
+php source/your_api.php  # Check for errors
+```
+
+### **Common Commands:**
+```bash
+# MySQL
+/Applications/MAMP/Library/bin/mysql -h localhost -P 8889 -u root -proot
+
+# Check table schema
+DESCRIBE table_name;
+
+# Check column exists
+SHOW COLUMNS FROM table_name LIKE 'column_name';
 ```
 
 ---
 
 **Remember:** 
-- 🎯 Goal = DAG replaces Linear completely
-- ⏰ Timeline = Q3 2026
-- 🛡️ Safety = Keep Linear working until then
-- 📚 Context = Read this file before major changes
+- 🌐 i18n: Default English, translate to Thai
+- 🔒 Security: Always prepared statements
+- ✅ Test: Write tests for new features
+- 📚 Document: Update docs when done
 
 **Good luck!** 🚀
 
 ---
 
-**Last Updated:** November 2, 2025  
-**Next Review:** Q2 2026 (before Linear removal)  
+**Last Updated:** December 6, 2025  
+**Next Review:** When new major features are added  
 **Maintained By:** System Architect
-

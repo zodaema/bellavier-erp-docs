@@ -1100,7 +1100,7 @@ These are **reserved, not-yet-implemented** tasks for the day we want to refacto
 ### Future Tasks (Placeholders)
 
 - task27.md - (Planned)
-- task28.md - (Planned)
+- [task28_GRAPH_VERSIONING_IMPLEMENTATION.md](tasks/task28_GRAPH_VERSIONING_IMPLEMENTATION.md) - Graph Versioning & Immutability Implementation (📋 PLANNED)
 - task29.md - (Planned)
 - task30.md - (Planned)
 - task31.md - (Planned)

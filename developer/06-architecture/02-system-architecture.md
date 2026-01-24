@@ -1,8 +1,8 @@
 # 🏗️ Bellavier Group ERP - System Architecture
 
-**Date:** January 2025  
-**Version:** 2.0 (SuperDAG Integration + Bootstrap Layers)  
-**Last Updated:** January 2025
+**Date:** December 2025  
+**Version:** 3.1 (SuperDAG + Component Architecture V2 + Material System + UI Refactor)  
+**Last Updated:** December 9, 2025
 
 ---
 
@@ -12,22 +12,42 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    CLIENT LAYER (Browser)                    │
 ├─────────────────────────────────────────────────────────────┤
+│  • jQuery 3.7.1 + AJAX (API Communication)                  │
+│  • Bootstrap 5 (UI Framework - Sash Theme)                  │
+│  • Select2 (Enhanced Dropdowns)                             │
+│  • DataTables (Data Lists)                                  │
+│  • SweetAlert2 (Dialogs)                                    │
+│  • Cytoscape.js (Graph Designer)                            │
 │  • FullCalendar.js (Production Schedule)                    │
 │  • Chart.js (Capacity Visualization)                        │
-│  • jQuery + AJAX (API Communication)                        │
-│  • Bootstrap 5 (UI Framework)                               │
-│  • Graph Designer (DAG routing graph editor)                │
-│  • GraphTimezone.js (Canonical timezone normalization)      │
+│  • GraphTimezone.js (Timezone normalization)                │
+│  • i18n (Translation system: t('key', 'default'))           │
+│                                                             │
+│  Work Queue UI Components (NEW Dec 9):                      │
+│  • TokenCardComponent ⭐ - Single component pattern         │
+│    ├─ TokenCardState.js - State computation                 │
+│    ├─ TokenCardParts.js - UI parts (buttons, warnings)      │
+│    └─ TokenCardLayouts.js - Layouts (kanban/list/mobile)    │
+│  • WorkModalController.js ⭐ - Behavior-specific modals      │
+│  • BGTimeEngine.js - Timer management                       │
 └─────────────────────────────────────────────────────────────┘
                             ↓ HTTPS
 ┌─────────────────────────────────────────────────────────────┐
-│                  APPLICATION LAYER (PHP)                     │
+│                  APPLICATION LAYER (PHP 8.2)                 │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              BOOTSTRAP LAYERS                         │  │
 │  │  • TenantApiBootstrap - Tenant-scoped APIs (40+)      │  │
-│  │  • CoreApiBootstrap - Platform/core APIs (12)          │  │
-│  │  • Auto tenant resolution & DB connection              │  │
+│  │  • CoreApiBootstrap - Platform/core APIs (12)         │  │
+│  │  • Auto tenant resolution & DB connection             │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │              ENTERPRISE API HELPERS                   │  │
+│  │  • RateLimiter - Request throttling                   │  │
+│  │  • RequestValidator - Input validation                │  │
+│  │  • Idempotency - Duplicate prevention                 │  │
+│  │  • ETag/If-Match - Concurrency control                │  │
+│  │  • Maintenance Mode - Graceful shutdown               │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              ROUTING & SESSION                        │  │
@@ -37,42 +57,62 @@
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              PERMISSION LAYER                         │  │
-│  │  • PermissionHelper (PSR-4) - Authorization          │  │
+│  │  • PermissionHelper (PSR-4) - Authorization           │  │
 │  │  • is_platform_administrator() - Platform check       │  │
 │  │  • is_tenant_administrator() - Tenant check           │  │
-│  │  • Hybrid: Tenant-first, fallback to Core            │  │
+│  │  • Hybrid: Tenant-first, fallback to Core             │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │              API ENDPOINTS                            │  │
-│  │  • Tenant APIs: products, materials, bom, etc. (40+)  │  │
-│  │  • Platform APIs: platform_dashboard, health (12)     │  │
-│  │  • DAG APIs: dag_routing_api, dag_token_api           │  │
-│  │  • MO APIs: mo.php + MO service layer                 │  │
-│  └───────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │              SERVICE LAYER                             │  │
-│  │  • ScheduleService, BOMService, WorkCenterService      │  │
-│  │  • DAGRoutingService, TokenLifecycleService           │  │
-│  │  • MO Services: MOCreateAssist, MOLoadEta, etc.       │  │
-│  │  • Product Services: ClassicProductionStats, etc.     │  │
+│  │              SERVICE LAYER                            │  │
+│  │  Core Services:                                       │  │
+│  │  • TokenLifecycleService - Token spawn/move/complete  │  │
+│  │  • DAGRoutingService - Split/join/conditional         │  │
+│  │  • NodeAssignmentService - Pre-assign, auto-assign    │  │
+│  │  • ProductionRulesService - Hatthasilpa/Classic rules │  │
+│  │  • ValidationService - Input validation               │  │
+│  │  • DatabaseTransaction - Transaction management       │  │
+│  │  • PermissionEngine ⭐ (NEW Dec 9) - Token-level perms│  │
+│  │                                                       │  │
+│  │  Component Services (NEW Dec 2025):                   │  │
+│  │  • ComponentMappingService - Graph ↔ Component        │  │
+│  │  • ProductReadinessService - Config validation        │  │
+│  │                                                       │  │
+│  │  Material Services (NEW Dec 2025):                    │  │
+│  │  • MaterialRequirementService - BOM calculation       │  │
+│  │  • MaterialReservationService - Stock reservation     │  │
+│  │  • MaterialAllocationService - Consumption tracking │  │
+│  │  • MaterialAllocationService::handleScrapMaterials() ⭐│  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
 │  │              DAG ENGINE LAYER                         │  │
+│  │  Execution:                                           │  │
 │  │  • DagExecutionService - Token movement               │  │
 │  │  • BehaviorExecutionService - Node behavior           │  │
 │  │  • NodeBehaviorEngine - Behavior execution            │  │
-│  │  • ParallelMachineCoordinator - Parallel execution     │  │
-│  │  • MachineAllocationService - Machine binding          │  │
+│  │  • ParallelMachineCoordinator - Parallel execution    │  │
+│  │                                                       │  │
+│  │  QC & Rework (NEW Dec 2025):                          │  │
+│  │  • QCReworkV2Service - Component-aware rework         │  │
+│  │  • DefectCatalogService - Defect management           │  │
+│  │                                                       │  │
+│  │  Validation & Injection (NEW Dec 2025):               │  │
+│  │  • GraphLinterService - 30+ validation rules          │  │
+│  │  • ComponentInjectionService - MCI handling           │  │
+│  │                                                       │  │
+│  │  Self-Healing:                                        │  │
+│  │  • LocalRepairEngine - L1 repairs                     │  │
+│  │  • TimelineReconstructionEngine - L2/L3 repairs       │  │
+│  │                                                       │  │
+│  │  Time & ETA:                                          │  │
 │  │  • EtaEngine - ETA/SLA calculation                    │  │
-│  │  • LocalRepairEngine - Self-healing (L1)              │  │
-│  │  • TimelineReconstructionEngine - Self-healing (L2/L3)│  │
+│  │  • TimeHelper - Canonical timezone                    │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │              HELPER / UTILITY LAYER                    │  │
-│  │  • TimeHelper (PHP) - Canonical timezone              │  │
+│  │              HELPER / UTILITY LAYER                   │  │
 │  │  • DatabaseHelper - DB operations                     │  │
 │  │  • PermissionHelper - Permission checks               │  │
 │  │  • BootstrapMigrations - Migration execution          │  │
+│  │  • InventoryHelper - Stock operations                 │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                             ↓ MySQLi
@@ -80,7 +120,7 @@
 │                    DATABASE LAYER (MySQL)                    │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │   CORE DATABASE (bgerp) - Shared Platform Data       │  │
+│  │   CORE DATABASE (bgerp) - Shared Platform Data        │  │
 │  ├───────────────────────────────────────────────────────┤  │
 │  │  • account - Users                                    │  │
 │  │  • organization - Tenant registry                     │  │
@@ -90,26 +130,49 @@
 │  │  • tenant_role_template - Role templates              │  │
 │  └───────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  TENANT DATABASES (bgerp_t_*) - Isolated Org Data    │  │
+│  │  TENANT DATABASES (bgerp_t_*) - Isolated Org Data     │  │
 │  ├───────────────────────────────────────────────────────┤  │
-│  │  PER TENANT:                                          │  │
-│  │  • permission - Synced from core                      │  │
-│  │  • tenant_role - Organization roles                   │  │
+│  │  CORE TABLES:                                         │  │
+│  │  • permission, tenant_role                            │  │
+│  │  • product, bom, routing, stock                       │  │
+│  │  • work_center, machine                               │  │
+│  │                                                       │  │
+│  │  MANUFACTURING:                                       │  │
 │  │  • mo - Manufacturing orders                          │  │
-│  │  • mo_eta_cache - MO ETA cache (Task 23)              │  │
-│  │  • mo_eta_health_log - ETA health log (Task 23)       │  │
 │  │  • atelier_job_ticket - Job tickets (Linear)          │  │
-│  │  • routing_graph - DAG routing graphs                 │  │
-│  │  • routing_node - DAG nodes                           │  │
-│  │  • routing_edge - DAG edges                           │  │
-│  │  • flow_token - DAG tokens                            │  │
-│  │  • token_event - Canonical events (Task 21)           │  │
-│  │  • token_work_session - Work sessions                 │  │
-│  │  • token_repair_log - Repair audit trail (Task 22)    │  │
-│  │  • work_center - Work centers                          │  │
-│  │  • machine - Machines                                 │  │
-│  │  • product, bom, routing, stock, etc.                 │  │
-│  │  • production_output_daily - Daily stats (Task 25)    │  │
+│  │  • atelier_job_task, atelier_wip_log                  │  │
+│  │  • atelier_task_operator_session                      │  │
+│  │                                                       │  │
+│  │  DAG ROUTING:                                         │  │
+│  │  • routing_graph, routing_node, routing_edge          │  │
+│  │  • job_graph_instance, node_instance                  │  │
+│  │  • flow_token, token_event                            │  │
+│  │  • token_work_session, token_repair_log               │  │
+│  │                                                       │  │
+│  │  COMPONENT ARCHITECTURE V2 (NEW Dec 2025):            │  │
+│  │  • component_type_catalog (24 types)                  │  │
+│  │  • product_component                                  │  │
+│  │  • product_component_material                         │  │
+│  │  • graph_component_mapping                            │  │
+│  │                                                       │  │
+│  │  QC & DEFECT (NEW Dec 2025):                          │  │
+│  │  • defect_category (8 categories)                     │  │
+│  │  • defect_catalog (36 defects)                        │  │
+│  │  • qc_rework_override_log                             │  │
+│  │                                                       │  │
+│  │  MATERIAL SYSTEM (NEW Dec 2025):                      │  │
+│  │  • material_requirement                               │  │
+│  │  • material_reservation                               │  │
+│  │  • material_allocation                                │  │
+│  │  • material_requirement_log ⭐ (NEW Dec 9: rework events)│  │
+│  │    └─ Event types: rework_reserve, material_returned_  │  │
+│  │       scrap, material_wasted_scrap                    │  │
+│  │  • v_material_available (VIEW)                        │  │
+│  │  • v_job_material_status (VIEW)                       │  │
+│  │                                                       │  │
+│  │  AUDIT:                                               │  │
+│  │  • product_config_log                                 │  │
+│  │  • component_injection_log                            │  │
 │  └───────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -118,7 +181,7 @@
 
 ## 🔐 Permission Architecture
 
-### **Hybrid Model: Tenant-Isolated with Core Fallback**
+### **Hybrid Model: Tenant-Isolated with Core Fallback + Token-Level Engine**
 
 ```
 User Request
@@ -129,284 +192,232 @@ User Request
     │       ├─ TRUE → Grant ALL access
     │       └─ FALSE → Continue
     ↓
-2. Check Tenant Role (NEW - Priority)
+2. Check Tenant Role (Priority)
     ├─ tenant_permission_allow_code()
     │   └─ Query: tenant_role + tenant_role_permission (Tenant DB)
     │       ├─ TRUE → Grant access
     │       ├─ FALSE → Deny access
-    │       └─ NULL (tenant system not active) → Fallback to #3
+    │       └─ NULL (not active) → Fallback to #3
     ↓
 3. Fallback: Core Permission (Legacy)
     └─ permission_allow()
         └─ Query: permission_allow (Core DB)
             ├─ TRUE → Grant access
             └─ FALSE → Deny access
+    ↓
+4. Token-Level Permission (NEW Dec 9) ⭐
+    └─ PermissionEngine::canActOnToken()
+        ├─ Layer 1: Role Permission (via PermissionHelper)
+        ├─ Layer 2: Assignment Method (strict, auto, pin, help)
+        ├─ Layer 3: Node Config (QC self-pick, self-QC)
+        └─ Layer 4: Token Type (replacement, rework, split)
+```
+
+### **PermissionEngine Service (NEW Dec 9)**
+
+**Purpose:** Token-level permission checks for Work Queue operations
+
+**Key Methods:**
+- `canActOnToken()` - Main permission check
+- `canStartToken()` - Start permission
+- `canPauseToken()` - Pause permission
+- `canCompleteToken()` - Complete permission
+- `canQCToken()` - QC permission (self-QC rules)
+
+**Integration:**
+- Used by `dag_token_api.php` for action validation
+- Supports ACTION_PERMISSIONS pattern (Task 27.23)
+
+---
+
+## 📦 Component Architecture V2
+
+### **3-Layer Model:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 1: component_type_catalog (Generic Types)            │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ MAIN: BODY, FLAP, POCKET, GUSSET, BASE, DIVIDER, FRAME  ││
+│  │ ACCESSORY: STRAP, HANDLE, ZIPPER_PANEL, ZIP_POCKET, LOOP││
+│  │ INTERIOR: LINING, INTERIOR_PANEL, CARD_SLOT_PANEL       ││
+│  │ REINFORCEMENT: REINFORCEMENT, PADDING, BACKING          ││
+│  │ DECORATIVE: LOGO_PATCH, DECOR_PANEL, BADGE              ││
+│  └─────────────────────────────────────────────────────────┘│
+│                            ↓                                 │
+│  LAYER 2: product_component (Product-Specific)              │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ Example: Product "Aimee Mini Green Tea"                 ││
+│  │ ├─ AimeeMini_BODY (type: BODY)                          ││
+│  │ ├─ AimeeMini_FLAP (type: FLAP)                          ││
+│  │ └─ AimeeMini_STRAP_LONG (type: STRAP)                   ││
+│  └─────────────────────────────────────────────────────────┘│
+│                            ↓                                 │
+│  LAYER 3: product_component_material (BOM)                  │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ AimeeMini_BODY:                                         ││
+│  │ ├─ Leather Green Tea: 2.5 sq.ft × 1.05 waste            ││
+│  │ ├─ Lining Cotton: 1.0 sq.ft                             ││
+│  │ └─ Thread Gold: 10 m                                    ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+### **Graph Mapping:**
+
+```
+routing_node.anchor_slot          graph_component_mapping
+┌─────────────────────┐           ┌─────────────────────────┐
+│ anchor_slot: BODY   │──────────▶│ id_product_component: 42│
+│ anchor_slot: FLAP   │──────────▶│ id_product_component: 43│
+│ anchor_slot: STRAP  │──────────▶│ id_product_component: 44│
+└─────────────────────┘           └─────────────────────────┘
+                                            │
+                                            ▼
+                                  product_component
+                                  ┌─────────────────────────┐
+                                  │ AimeeMini_BODY (id: 42) │
+                                  │ AimeeMini_FLAP (id: 43) │
+                                  │ AimeeMini_STRAP (id: 44)│
+                                  └─────────────────────────┘
 ```
 
 ---
 
-## 📅 Production Schedule Architecture
+## 🧮 Material System Architecture
 
 ### **Data Flow:**
 
 ```
-User Action (Drag & Drop MO)
+Job Creation
     ↓
-Frontend (schedule.js)
-    ├─ FullCalendar event handler
-    ├─ Extract new dates
-    └─ AJAX POST to source/atelier_schedule.php
-        ↓
-API Endpoint (atelier_schedule.php)
-    ├─ Authenticate (session check)
-    ├─ Authorize (schedule.edit permission)
-    └─ Delegate to ScheduleService
-        ↓
-Service Layer (ScheduleService.php)
-    ├─ Validate dates (start < end)
-    ├─ Check MO status (not completed)
-    ├─ Log change (schedule_change_log)
-    └─ UPDATE mo table
-        ↓
-Database (Tenant DB)
-    ├─ mo.scheduled_start_date = new date
-    ├─ mo.scheduled_end_date = new date
-    └─ mo.is_scheduled = 1
-        ↓
-Response
-    ├─ Success: {"ok":true,"message":"Schedule updated"}
-    └─ Error: {"ok":false,"error":"validation failed"}
-        ↓
-Frontend
-    ├─ Show notification
-    ├─ Refresh calendar
-    └─ Update summary panel
+┌────────────────────────────────────────────────────────────┐
+│ MaterialRequirementService.calculateForJob()               │
+│ ├─ Read graph_component_mapping for product                │
+│ ├─ For each mapping → product_component                    │
+│ ├─ For each component → product_component_material (BOM)   │
+│ └─ Calculate: material × qty_target × waste_factor         │
+└────────────────────────────────────────────────────────────┘
+    ↓
+┌────────────────────────────────────────────────────────────┐
+│ MaterialReservationService.reserveForJob()                 │
+│ ├─ Check: on_hand - reserved = available                   │
+│ ├─ If available >= required → CREATE reservation           │
+│ └─ If available < required → partial or pending_materials  │
+└────────────────────────────────────────────────────────────┘
+    ↓
+┌────────────────────────────────────────────────────────────┐
+│ Job Execution (Token Flow)                                 │
+│ ├─ Token arrives at CUT node                               │
+│ ├─ MaterialAllocationService.allocateToToken()             │
+│ └─ Convert reservation → allocation                        │
+└────────────────────────────────────────────────────────────┘
+    ↓
+┌────────────────────────────────────────────────────────────┐
+│ Token Completes                                            │
+│ ├─ MaterialAllocationService.consumeMaterial()             │
+│ ├─ Update: actual_qty, consumed_at                         │
+│ └─ Log waste/scrap if applicable                           │
+└────────────────────────────────────────────────────────────┘
+```
+
+### **Key Formulas:**
+
+```
+available_for_new_jobs = on_hand - reserved
+
+required_qty = BOM_qty × job_qty × waste_factor
+
+shortage = MAX(0, required_qty - available_for_new_jobs)
 ```
 
 ---
 
-## 🔄 Capacity Calculation Flow
+## ✅ Product Readiness System
 
-### **Factory Pattern:**
+### **Validation Flow:**
 
 ```
-User Loads Calendar
+ProductReadinessService.getProductReadiness($productId)
     ↓
-Frontend requests capacity_data
+┌────────────────────────────────────────────────────────────┐
+│ For Hatthasilpa Products:                                  │
+│ ├─ ✓ has_production_line (must be 'hatthasilpa')           │
+│ ├─ ✓ has_graph_binding                                     │
+│ ├─ ✓ graph_is_published                                    │
+│ ├─ ✓ graph_has_start_node                                  │
+│ ├─ ✓ has_components (at least 1)                           │
+│ ├─ ✓ components_have_materials (each has BOM)              │
+│ └─ ✓ mapping_complete (all anchor_slots mapped)            │
+└────────────────────────────────────────────────────────────┘
     ↓
-API: source/atelier_schedule.php?action=capacity_data
+┌────────────────────────────────────────────────────────────┐
+│ For Classic Products:                                      │
+│ ├─ ✓ has_production_line (must be 'classic')               │
+│ ├─ ✓ has_components (at least 1)                           │
+│ └─ ✓ components_have_materials (each has BOM)              │
+└────────────────────────────────────────────────────────────┘
     ↓
-CapacityCalculatorFactory::create($db, $mode)
-    ├─ Read: production_schedule_config.capacity_mode
-    ├─ Mode = 'simple' → SimpleCapacityCalculator
-    ├─ Mode = 'work_center' → WorkCenterCapacityCalculator
-    └─ Mode = 'skill_based' → SkillBasedCalculator (future)
-        ↓
-Calculator->calculate($start_date, $end_date)
-    ├─ For each day in range:
-    │   ├─ Count active MO (simple mode)
-    │   ├─ OR Calculate work center load (work center mode)
-    │   └─ Return: {capacity, used, available, percentage}
-    └─ Return array of daily capacity
-        ↓
-Response: {"ok":true,"capacity":[...]}
-    ↓
-Frontend renders Chart.js bar chart
+┌────────────────────────────────────────────────────────────┐
+│ Result:                                                    │
+│ ├─ is_ready: true/false                                    │
+│ ├─ checks: { ... detailed check results ... }              │
+│ └─ missing: ['mapping_complete', ...]                      │
+└────────────────────────────────────────────────────────────┘
 ```
 
----
+### **UI Integration:**
 
-## 🗄️ Database Schema Relationships
+```javascript
+// Product List - Ready badge
+if (product.is_ready) {
+    return '<i class="fe fe-check-circle text-success"></i>';
+} else {
+    return ''; // No badge
+}
 
-### **Core DB (bgerp):**
-
-```
-account (users)
-    ↓ 1:N
-account_org (user↔tenant mapping)
-    ↓ N:1
-organization (tenants)
-
-account
-    ↓ 1:1
-platform_user (platform admins)
-    ↓ 1:N
-platform_user_role
-    ↓ N:1
-platform_role
-
-permission (master list, 93)
-    ↓ 1:N
-tenant_role_template_permission
-    ↓ N:1
-tenant_role_template (7 templates)
-```
-
----
-
-### **Tenant DB (bgerp_t_*):**
-
-```
-permission (synced from core, 93)
-    ↓ 1:N
-tenant_role_permission (assignments)
-    ↓ N:1
-tenant_role (23 roles)
-
-product
-    ↓ 1:N
-mo (manufacturing orders)
-    ↓ 1:N
-atelier_job_ticket
-    ↓ N:1
-work_center
-
-product
-    ↓ 1:1
-routing
-    ↓ 1:N
-routing_step
-    ↓ N:1
-work_center
+// Job Creation - Block non-ready
+if (!product.is_ready) {
+    option.disabled = true;
+    option.text += ' (รอตั้งค่า)';
+}
 ```
 
 ---
 
 ## 🔧 Key Design Patterns
 
-### **1. Factory Pattern** (CapacityCalculator)
+### **1. Service Layer Pattern**
 ```php
-interface CapacityCalculatorInterface {
-    public function calculate($start, $end);
+// All business logic in services
+class MaterialRequirementService {
+    public function calculateForJob(int $jobId, int $productId, int $qtyTarget): array;
+    public function checkStockAvailability(int $productId, int $qtyTarget): array;
+    public function recalculateRequirements(int $jobId): void;
 }
-
-class SimpleCapacityCalculator implements CapacityCalculatorInterface { ... }
-class WorkCenterCapacityCalculator implements CapacityCalculatorInterface { ... }
-
-CapacityCalculatorFactory::create($db, $mode);
 ```
 
-**Benefits:**
-- Easy to add new calculation modes
-- Swap implementations without changing API
-- Testable in isolation
-
----
-
-### **2. Strategy Pattern** (Permission Checking)
+### **2. Factory Pattern** (CapacityCalculator)
 ```php
-// Try tenant system first
-$result = tenant_permission_allow_code();
+CapacityCalculatorFactory::create($db, $mode);
+// → SimpleCapacityCalculator | WorkCenterCapacityCalculator
+```
 
+### **3. Strategy Pattern** (Permission)
+```php
+// Try tenant system first, fallback to legacy
+$result = tenant_permission_allow_code();
 if ($result === null) {
-    // Fallback to legacy system
     $result = permission_allow();
 }
 ```
 
-**Benefits:**
-- Gradual migration path
-- Backward compatibility
-- Zero downtime deployment
-
----
-
-### **3. Separation of Concerns**
-```
-Controller (atelier_schedule.php)
-    ├─ Handle HTTP request/response
-    ├─ Validate input
-    └─ Delegate to Service Layer
-
-Service (ScheduleService.php)
-    ├─ Business logic
-    ├─ Data validation
-    └─ Database operations
-
-Model (Database tables)
-    └─ Data persistence
-```
-
----
-
-## 🚀 Scalability Considerations
-
-### **Current Capacity:**
-
-| Metric | Current | Phase 2 | Phase 3 |
-|--------|---------|---------|---------|
-| **Tenants** | 2 | 10 | 50+ |
-| **Users/Tenant** | 5-10 | 20-50 | 100+ |
-| **MO/Day** | 5-10 | 20-50 | 100+ |
-| **Concurrent Users** | 2-3 | 10-15 | 50+ |
-
-**Performance Optimizations:**
-- ✅ Indexed queries (id, code, dates)
-- ✅ Prepared statements (SQL injection prevention)
-- ✅ Minimal JOINs (optimized queries)
-- 🔄 Future: Redis cache for permissions
-- 🔄 Future: Read replicas for reports
-
----
-
-## 🔐 Security Architecture
-
-### **Authentication:**
-```
-1. Session-based (PHP sessions)
-2. Remember Me cookie (optional, hashed token)
-3. Auto-login on cookie validation
-```
-
-### **Authorization:**
-```
-1. Role-based (account_group / tenant_role)
-2. Permission-based (permission codes)
-3. Tenant-isolated (each org has own data)
-```
-
-### **Data Isolation:**
-```
-1. Separate databases per tenant (bgerp_t_*)
-2. org_code in session determines active tenant
-3. resolve_current_org() enforces context
-```
-
----
-
-## 📈 Monitoring & Logging
-
-### **Application Logs:**
+### **4. Event Sourcing** (Token Events)
 ```php
-error_log() - PHP errors
-LogHelper - Application events
-schedule_change_log - Schedule audit trail
+// All token state changes logged as events
+INSERT INTO token_event (id_token, event_type, event_data, ...)
+// State reconstructable from event history
 ```
-
-### **Database Monitoring:**
-```sql
--- Schedule usage
-SELECT COUNT(*) FROM schedule_change_log 
-WHERE changed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY);
-
--- Permission checks (slow query log)
--- Capacity calculations
-```
-
----
-
-## 🔮 Future Architecture
-
-### **Phase 2 Enhancements:**
-- Work center capacity mode
-- Real-time collaboration (WebSockets)
-- Background job queue (for auto-arrange)
-
-### **Phase 3 Scaling:**
-- Microservices (if > 100 tenants)
-- Elasticsearch (for full-text search)
-- Redis cache (for frequently accessed data)
-- CDN (for static assets)
 
 ---
 
@@ -414,58 +425,42 @@ WHERE changed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY);
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
-| **Frontend** | FullCalendar | 6.1.10 | Production calendar |
-| **Frontend** | Chart.js | 4.4.0 | Capacity visualization |
-| **Frontend** | jQuery | 3.7.1 | AJAX & DOM manipulation |
-| **Frontend** | Bootstrap | 5.x | UI framework |
-| **Backend** | PHP | 7.4+ | Application logic |
+| **Frontend** | jQuery | 3.7.1 | AJAX & DOM |
+| **Frontend** | Bootstrap | 5.x (Sash) | UI framework |
+| **Frontend** | Select2 | 4.1.0 | Enhanced dropdowns |
+| **Frontend** | DataTables | 2.3.2 | Data tables |
+| **Frontend** | SweetAlert2 | 11.x | Dialogs |
+| **Frontend** | Cytoscape.js | 3.x | Graph designer |
+| **Frontend** | FullCalendar | 6.1.10 | Calendar |
+| **Frontend** | Chart.js | 4.4.0 | Charts |
+| **Backend** | PHP | 8.2+ | Application logic |
+| **Backend** | MySQLi | - | Database driver |
 | **Database** | MySQL | 5.7+ | Data persistence |
-| **Server** | Apache/Nginx | Any | Web server |
+| **Server** | Apache (MAMP) | - | Web server |
 
 ---
 
-## 📝 Architectural Decisions
+## 🚀 Scalability
 
-### **1. Why Tenant-Isolated Permissions?**
+| Metric | Current | Phase 2 | Phase 3 |
+|--------|---------|---------|---------|
+| **Tenants** | 2 | 10 | 50+ |
+| **Users/Tenant** | 5-10 | 20-50 | 100+ |
+| **MO/Day** | 5-10 | 20-50 | 100+ |
+| **Tokens/Day** | 50-100 | 200-500 | 1000+ |
+| **Concurrent Users** | 2-3 | 10-15 | 50+ |
 
-**Problem:** Shared core permissions → all tenants get same permissions
-
-**Solution:** Each tenant has own permission table
-
-**Benefits:**
-- ✅ Tenant customization (add/remove permissions)
-- ✅ Security (tenant A can't see tenant B's config)
-- ✅ Compliance (GDPR, SOC 2)
-
----
-
-### **2. Why Interface-Based CapacityCalculator?**
-
-**Problem:** Different calculation methods needed (simple/work center/skill-based)
-
-**Solution:** Interface + Factory pattern
-
-**Benefits:**
-- ✅ Easy to swap implementations
-- ✅ Add new modes without changing API
-- ✅ Testable in isolation
+**Optimizations:**
+- ✅ Indexed queries (id, code, dates, status)
+- ✅ Prepared statements (SQL injection prevention)
+- ✅ Minimal JOINs (optimized queries)
+- ✅ Views for complex aggregations
+- 🔄 Future: Redis cache for permissions
+- 🔄 Future: Read replicas for reports
 
 ---
 
-### **3. Why Service Layer?**
-
-**Problem:** Business logic mixed with controller code
-
-**Solution:** Separate service classes
-
-**Benefits:**
-- ✅ Reusable business logic
-- ✅ Easier to test
-- ✅ Cleaner code (SRP principle)
-
----
-
-## 🎯 Summary
+## 📝 Summary
 
 **Architecture Type:** Monolithic (Multi-Tenant) with DAG Execution Engine
 
@@ -473,19 +468,16 @@ WHERE changed_at >= DATE_SUB(NOW(), INTERVAL 7 DAY);
 
 **Permission Model:** Hybrid (Tenant-first, Core fallback)
 
-**Design Patterns:** Factory, Strategy, Separation of Concerns, Service Layer, Bootstrap Layers
-
-**Execution Model:** Dual-Mode (Linear + DAG) → Single-Mode (DAG only by Q3 2026)
+**Production Model:** Dual-Mode (Hatthasilpa/DAG + Classic/Linear)
 
 **Key Components:**
 - ✅ Bootstrap Layers (TenantApiBootstrap, CoreApiBootstrap)
-- ✅ DAG Engine (Token-based routing, parallel execution, machine binding)
-- ✅ Self-Healing (LocalRepairEngine, TimelineReconstructionEngine)
-- ✅ Time Engine (Canonical timezone, ETA/SLA calculation)
-- ✅ MO Intelligence (ETA, Load Simulation, Health Monitoring)
-- ✅ Product Integration (Classic/Hatthasilpa consolidation)
+- ✅ DAG Engine (Token-based routing, parallel execution)
+- ✅ Component Architecture V2 (3-layer model)
+- ✅ Material System (Requirement, Reservation, Allocation)
+- ✅ Product Readiness (Configuration validation)
+- ✅ Self-Healing (LocalRepairEngine, TimelineReconstruction)
+- ✅ QC Rework V2 (Component-aware, defect-based)
+- ✅ Graph Linter (30+ validation rules)
 
-**Scalability:** Designed for 2-50 tenants, 100+ users/tenant, 1000+ tokens/day
-
-**Status:** ✅ **Production Ready** (100% enterprise-compliant APIs, 104+ tests passing)
-
+**Status:** ✅ **Production Ready** (100% enterprise-compliant, 104+ tests)

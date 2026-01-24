@@ -204,6 +204,40 @@ INSERT INTO work_center_behavior (
 - CUT performance report → Shows batch scrap rate: 10%
 - Token Engine → Knows next step (STITCH) has max input of 18 pieces (even if original MO planned 10 bags, system may split MO or store excess as component stock)
 
+---
+
+### Scenario: CUT (Atelier) — ตัด BODY 10 ชิ้นก่อน แล้วปล่อยไป EDGE/PAINT ทันที (Partial Release)
+
+**Intent:** สะท้อน “ธรรมชาติ Atelier” ที่ทำงานแบบ component-first sweep
+
+**Step 1: Work Queue (Job-level card)**
+- หน้าแรกแสดง Card งานใหญ่: “TOTE รุ่น X • 10 ใบ • CUT”
+- ไม่แสดงรายการ token ย่อยบนหน้าแรก (กันรก/กันสับสน)
+
+**Step 2: Open CUT Modal (Requirement Table)**
+- ภายใน modal แสดงตารางต่อ `component_code`:
+  - BODY required 10 / done 0 / released 0
+  - FLAP required 10 / done 0 / released 0
+  - STRAP required 10 / done 0 / released 0
+
+**Step 3: Worker cuts BODY first**
+- Worker ใส่ done_delta = 10 ที่แถว BODY แล้วกด “Save yield”
+- ถ้าเกิน requirement → ต้องเลือกเหตุผล (ตัดพลาด/ตัดเกิน/อื่นๆ)
+
+**Step 4: Partial release**
+- Worker กด “Release BODY = 10”
+- System:
+  - ตรวจ available_to_release_qty
+  - route/move component tokens ของ BODY จำนวน 10 ไป node ถัดไป (EDGE/PAINT) ตาม pinned snapshot
+  - บันทึก canonical event (idempotent)
+
+**Step 5: Downstream station starts immediately**
+- สถานี EDGE/PAINT เห็นงาน BODY เริ่มทำได้ทันที (ไม่ต้องรอ FLAP/STRAP)
+
+**Key outputs**
+- CUT dashboard เห็น progress แยกตาม component (BODY ส่งต่อแล้ว 10/10)
+- Work Queue หน้าแรกยังคงเป็น card งานใหญ่ แต่ตัวเลขใน modal สะท้อนสถานะจริง
+
 ### Scenario: Worker forgot to press Pause during STITCH (Hatthasilpa)
 
 **Step 1: Work Queue – STITCH Node**

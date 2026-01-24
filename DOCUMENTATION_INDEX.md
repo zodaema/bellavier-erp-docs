@@ -1,6 +1,6 @@
 # 📚 Bellavier ERP - Documentation Index
 
-**Last Updated:** November 5, 2025  
+**Last Updated:** December 6, 2025 (21:00 ICT)  
 **Purpose:** Quick navigation to all key documents  
 **Status:** Consolidated and cleaned
 
@@ -11,9 +11,9 @@
 **New to the project?** Read these in order:
 
 1. **`README.md`** - Project overview and quick start
-2. **`STATUS.md`** - Current state and next steps
-3. **`ROADMAP_V4.md`** - 6-week implementation plan
-4. **`docs/DUAL_PRODUCTION_MASTER_BLUEPRINT.md`** - Complete system design
+2. **`STATUS.md`** - Current state and next steps (v2.19.0)
+3. **`docs/super_dag/SYSTEM_CURRENT_STATE.md`** ⭐ **NEW** - Complete system architecture
+4. **`docs/super_dag/tasks/MASTER_IMPLEMENTATION_ROADMAP.md`** - Task 27 roadmap (ALL COMPLETE)
 
 ---
 
@@ -42,11 +42,13 @@
   - File templates ready
   - 5-day implementation plan
 
-- **`ROADMAP_V4.md`** - 6-week roadmap to 100%
-  - Week 1: Critical fixes
-  - Week 2-3: Work Item System
-  - Week 4-5: Assignment Engine
-  - Week 6: Control Center
+- **`docs/ROADMAP_LUXURY_WORLD_CLASS.md`** ⭐ **CANONICAL (2026–2027)** — Roadmap เป้าหมาย “Luxury world‑class”
+  - Product Workspace governance (canonical editor)
+  - DAG/SuperDAG runtime excellence + simulation
+  - Materials execution + QC evidence + Trace portal
+  - Security/Operations hardening (audit‑ready)
+
+> Historical (archived): `docs/archive/completed_phases/ROADMAP_V4.md` (Nov 2025, 6‑week plan)
 
 ---
 
@@ -67,6 +69,20 @@
   - All endpoints
   - Parameters and responses
   - Error handling
+
+- **`docs/API_DEFECT_CATALOG.md`** - Defect Catalog API (Task 27.14)
+  - CRUD for defect types
+  - Filter by component type
+  - Rework suggestions
+
+### **Component & Material Architecture (NEW - Dec 2025):**
+- **`docs/super_dag/SYSTEM_CURRENT_STATE.md`** ⭐ - Complete current system state
+- **`docs/super_dag/01-concepts/PRODUCT_COMPONENT_ARCHITECTURE.md`** - 3-Layer component model
+- **`docs/super_dag/01-concepts/DEFECT_CATALOG_SPEC.md`** - Defect system spec
+- **`docs/super_dag/01-concepts/QC_REWORK_PHILOSOPHY_V2.md`** - QC Rework V2 spec
+- **`docs/super_dag/01-concepts/GRAPH_LINTER_RULES.md`** - Graph validation rules
+- **`docs/super_dag/01-concepts/MISSING_COMPONENT_INJECTION_SPEC.md`** - MCI spec
+- **`docs/06-specs/PUBLISHED_IMMUTABLE_CONTRACT.md`** ⭐ - **Published = Immutable** contract (Product Revision hardening)
 
 ### **Architecture:**
 - **`docs/SYSTEM_ARCHITECTURE.md`** - Overall architecture
@@ -111,7 +127,9 @@
 ### **Production Readiness:**
 - **`docs/PRODUCTION_HARDENING.md`** - Production checklist
 - **`docs/RISK_PLAYBOOK.md`** - Risk scenarios & solutions
-- **`docs/FUTURE_AI_CONTEXT.md`** - Strategic context for AI
+- **`docs/developer/06-architecture/01-system-overview.md`** - Strategic architecture overview
+- **`docs/developer/08-guides/10-linear-deprecation.md`** - Linear deprecation timeline & removal safety
+- **`docs/audit/STANDARDIZATION_AUDIT_2026_01_07.md`** - รายการไฟล์ API/JS ที่ควรยกระดับมาตรฐาน (RBAC/CSRF/Enterprise)
 
 ### **Testing:**
 - **`tests/README.md`** - Testing guide
@@ -147,7 +165,7 @@ Completed work and historical documents:
 → README.md → STATUS.md → DUAL_PRODUCTION_MASTER_BLUEPRINT.md
 
 **...implement a feature:**
-→ ROADMAP_V4.md → IMPLEMENTATION_STATUS_MAP.md → Specific implementation plan
+→ docs/ROADMAP_LUXURY_WORLD_CLASS.md → IMPLEMENTATION_STATUS_MAP.md → Specific implementation plan
 
 **...understand database:**
 → DATABASE_SCHEMA_REFERENCE.md → MIGRATION_GUIDE.md

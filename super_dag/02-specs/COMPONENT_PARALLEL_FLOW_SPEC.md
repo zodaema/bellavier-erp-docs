@@ -15,6 +15,14 @@
 - Audit: `docs/dag/00-audit/20251202_COMPONENT_PARALLEL_WORK_AUDIT_REPORT.md`
 - Subgraph Comparison: `docs/dag/00-audit/20251202_SUBGRAPH_VS_COMPONENT_AUDIT_REPORT.md`
 
+**Canonical Source of Truth (Ontology):**
+- `docs/super_dag/01-canonical/HATTHASILPA_CANONICAL_PRODUCTION_SPEC.md`
+
+**This document focuses on (mechanism-level):**
+- Component Tokens
+- Native Parallel Split / Merge
+- Component-level execution semantics
+
 ---
 
 ## 0. Terminology (Token Types)
@@ -53,8 +61,6 @@ NOT serial number pattern matching
 - **ห้ามใช้ serial pattern matching** (เช่น F001-BODY, F001-FLAP)
 - Real relationship = `parent_token_id` + `parallel_group_id` (ใน token graph)
 
----
-
 ## 1. Core Principle: Component Tokens = First-Class Tokens
 
 ### 1.1 Component Token = Core Mechanic
@@ -86,9 +92,9 @@ NOT serial number pattern matching
    - ต้อง track component time แยกกันเพื่อคำนวณ ETA
 
 4. **Assembly Merge:**
-   - Assembly node = join component tokens
-   - Final serial เกิดตอน **Job Creation** (ไม่ใช่ Assembly)
-   - Assembly = รอให้ทุก component เสร็จก่อน re-activate final token
+- Assembly node = join component tokens
+- Final serial **may be assigned at Job Creation for planning**, but **binding/ownership begins at Assembly**
+- Assembly = รอให้ทุก component เสร็จก่อน re-activate final token
 
 5. **Craftsmanship Traceability:**
    - Storytelling ของกระเป๋า = เวลาของแต่ละช่างในแต่ละชิ้น
@@ -201,12 +207,13 @@ flow_token (
 ```
 
 **⚠️ Missing Fields (Target):**
-- ❌ `component_code` VARCHAR(50) - Component identifier (BODY, FLAP, STRAP)
 - ❌ `id_component` INT - FK to product_component (Task 5)
 
-**Current Workaround:**
-- ใช้ `metadata` JSON field เก็บ `component_code` ชั่วคราว
-- Example: `metadata: {"component_code": "BODY", "component_name": "Bag Body"}`
+**Reality Check (Current Tenant Schema):**
+- ✅ `flow_token.component_code` มีอยู่แล้ว → **SSOT ของ component identity** เมื่อ `token_type='component'`
+
+**Policy:**
+- ห้ามให้ `metadata.component_code` เป็น SSOT (ใช้ได้แค่ backward compat / migration เท่านั้น)
 
 ### 2.2 routing_node (Node Table)
 
@@ -232,13 +239,19 @@ routing_node (
   is_merge_node TINYINT(1) NOT NULL DEFAULT 0 
     COMMENT 'Flag: This node merges parallel branches (2+ incoming edges required)',
   merge_mode VARCHAR(50) NULL 
-    COMMENT 'Merge semantics: ALL (wait for all branches), ANY (wait for any branch), N_OF_M',
+    COMMENT 'Legacy/compat only. Runtime SSOT is routing_node.parallel_merge_policy.',
   
   -- Indexes
   KEY idx_parallel_split (is_parallel_split),
   KEY idx_merge_node (is_merge_node)
 )
 ```
+
+**Reality Note (Important):**
+- snippet ด้านบนเป็น “baseline schema” จาก migration แรก
+- **ระบบจริงใน tenant ปัจจุบันมี fields เพิ่มแล้ว** และ runtime ใช้จริง:
+  - `parallel_merge_policy` (SSOT) + `parallel_merge_timeout_seconds` + `parallel_merge_at_least_count`
+- ดังนั้นเวลา implement/อ้างอิง “merge readiness” ให้ยึด `parallel_merge_policy` เป็นหลัก และมอง `merge_mode` เป็น legacy/compat เท่านั้น
 
 **⚠️ Missing Fields (Target for Component Flow):**
 - ❌ `produces_component` VARCHAR(50) - Component code this node produces/works with
@@ -312,7 +325,7 @@ switch ($behaviorCode) {
 | **QC_INITIAL** | ✅ Yes | ✅ **TARGET** | QC เบื้องต้น component |
 | **QC_REPAIR** | ✅ Yes | ✅ **TARGET** | QC หลัง repair component |
 | **QC_FINAL** | ✅ Yes | ❌ Final only | QC final product หลัง assembly |
-| **CUT** | 🎯 **Batch only** | ❌ Not Applicable | Cutting เป็น batch (ไม่ใช้ piece/component) |
+| **CUT** | 🎯 **Batch (UI is Job-level)** | 🎯 **Bulk by component (Target)** | Atelier cutting ทำแบบ “component-first sweep” ได้: UI เป็นงานใหญ่ แต่ปล่อยงานย่อยทีละ component ได้ |
 | **ASSEMBLY** | ✅ **Final only** | ❌ Not Applicable | รวม components → final |
 | **PACK** | ✅ **Final only** | ❌ Not Applicable | แพ็คสินค้าสำเร็จ (final only) |
 
@@ -322,13 +335,13 @@ switch ($behaviorCode) {
 - 🎯 **Specific** = Special use case (e.g., EDGE for components only, CUT for batch only)
 - ❌ Not Applicable = Does not apply to this token type
 
-**⚠️ IMPORTANT NOTE:**
+**⚠️ IMPORTANT NOTE (Updated):**
 
 This matrix represents **Bellavier Hatthasilpa factory workflow as of 2025-12-02.**  
 It is NOT an architectural law that prevents future extensions.
 
-**If future routing requires:**
-- CUT per component (e.g., cut specific component shapes separately)
+**If routing/UX requires (Atelier reality):**
+- CUT แบบ “component-first sweep + partial release” (ตัด BODY 10 ชิ้นก่อน ปล่อยไป EDGE/PAINT ก่อน)
 - PACK component sets (e.g., pack components before assembly)
 
 **Then:**
@@ -369,7 +382,7 @@ $context = [
 
 ## 4. Parallel Split Mechanism (Native Parallel Split)
 
-### 4.1 Current Implementation
+### 4.1 Current Implementation (Updated Reality)
 
 **Source:** `database/tenant_migrations/0001_init_tenant_schema_v2.php`
 
@@ -385,11 +398,36 @@ routing_node.is_parallel_split = 1
    - `parallel_branch_key` แตกต่างกัน ('A', 'B', 'C' หรือ '1', '2', '3')
 3. Parent token → `status = 'waiting'` (รอ merge)
 
-**⚠️ CURRENT GAP:**
-- ✅ Database schema ready (parallel_group_id, parallel_branch_key)
-- ✅ Node flags ready (is_parallel_split, is_merge_node)
-- ❌ **Token spawn logic NOT IMPLEMENTED** (ไม่มี splitToken() / createComponentToken())
-- ❌ **Node-to-component mapping NOT IMPLEMENTED** (ไม่มี produces_component field)
+**Reality (as of Task 30.3):**
+- ✅ Token spawn/split/merge runtime **implemented** (native parallel split + merge evaluation)
+- ✅ `flow_token.component_code` = SSOT (component identity)
+- ✅ `routing_node.parallel_merge_policy` = SSOT (merge readiness)
+- ⚠️ Node-to-component mapping columns (`produces_component`, `consumes_components`) ยังเป็น TARGET → runtime ใช้ `node_config`/`node_code` fallback ที่นิ่งและ deterministic
+
+**Law:** ห้ามเขียนโค้ดอิงว่า `produces_component` มีแล้ว จนกว่าจะมี migration และอัปเดต spec ส่วน schema
+
+---
+
+## 3.4 Atelier Cutting (Component-first) + Partial Release (Ideal Rule)
+
+### Principle
+Atelier “ไม่ตัดให้เสร็จทั้งใบทีละใบ” แต่ตัดแบบ “กวาดเป็นชิ้นส่วน”:
+- ตัด BODY ของ 10 ใบให้ครบก่อน → ปล่อยไป EDGE/PAINT ได้ทันที
+- แล้วค่อยกลับมาตัด FLAP/STRAP ต่อ
+
+### UX Rule (Non-negotiable)
+- Work Queue หน้าแรก: **Job-level card เท่านั้น**
+- งานย่อยต่อ component อยู่ใน **Modal/Detail** (ตาราง requirement)
+
+### Runtime Rule (How partial release works without UI clutter)
+- ระบบอนุญาตให้ “ปล่อยบางส่วน” โดย route/move **component tokens** จำนวน X ไป node ถัดไป
+- UI ไม่แสดง token ทีละใบ แต่แสดงเป็นตารางสรุป:
+  - required_qty / cut_done_qty / released_qty / available_to_release_qty
+
+### SSOT & Idempotency
+- SSOT การบันทึกการตัด/ปล่อย = canonical events ใน `token_event` (ผ่าน `TokenEventService`)
+- การ mutate ต้อง idempotent (กดซ้ำ/เน็ตเด้งไม่ทำซ้ำ)
+- ถ้า job pinned → resolve เส้นทาง node ถัดไปต้องอ่านจาก pinned snapshot
 
 ### 4.2 Target Node-to-Component Mapping
 
@@ -435,7 +473,7 @@ function handleParallelSplit($finalTokenId, $splitNodeId) {
             'parent_token_id' => $finalTokenId,
             'parallel_group_id' => $parallelGroupId,
             'parallel_branch_key' => ($i + 1), // 1, 2, 3
-            'metadata' => ['component_code' => $componentCode], // Temporary workaround
+            'component_code' => $componentCode, // SSOT (current schema)
             'current_node_id' => $edge['to_node_id']
         ]);
     }
@@ -525,7 +563,7 @@ Spec นี้ระบุเฉพาะ **Component Token interaction with mer
 ```sql
 routing_node:
   - is_merge_node: 1
-  - merge_mode: 'ALL' -- Wait for all components
+  - parallel_merge_policy: 'ALL' -- SSOT (wait for all components)
   - consumes_components: '["BODY","FLAP","STRAP"]' -- Required components
 ```
 
@@ -575,7 +613,7 @@ function validateMergeCompletion($finalTokenId, $mergeNodeId) {
 SELECT 
   ft.id_token,
   ft.serial_number,
-  ft.metadata->>'$.component_code' AS component_code,
+  ft.component_code AS component_code,
   ft.parent_token_id,
   parent.serial_number AS final_serial,
   rn.node_name,
@@ -704,7 +742,7 @@ function findComponentByTokenGraph($finalTokenId, $componentCode) {
         FROM flow_token 
         WHERE parent_token_id = ? 
           AND token_type = 'component'
-          AND metadata->>'$.component_code' = ?
+          AND component_code = ?
     ", [$finalTokenId, $componentCode]);
 }
 ```
@@ -728,10 +766,11 @@ function findComponentByTokenGraph($finalTokenId, $componentCode) {
 | `flow_token.parallel_branch_key` | ✅ CURRENT | Branch key (A, B, C) |
 | `routing_node.is_parallel_split` | ✅ CURRENT | Parallel split flag |
 | `routing_node.is_merge_node` | ✅ CURRENT | Merge node flag |
-| `routing_node.merge_mode` | ✅ CURRENT | Merge policy (ALL, ANY) |
+| `routing_node.parallel_merge_policy` | ✅ CURRENT | Merge policy SSOT (ALL, ANY, AT_LEAST, TIMEOUT_FAIL) |
+| `routing_node.merge_mode` | ✅ CURRENT (Legacy) | Compat only (do not treat as SSOT) |
 | `routing_node.produces_component` | 📋 TARGET | Component code mapping |
 | `routing_node.consumes_components` | 📋 TARGET | Required components JSON |
-| `flow_token.component_code` | 📋 TARGET | Component identifier field |
+| `flow_token.component_code` | ✅ CURRENT | Component identifier SSOT |
 | `product_component` table | 📋 TARGET | Component master data (Task 5) |
 | `job_tray` table | 📋 TARGET | Physical tray mapping |
 
@@ -826,8 +865,8 @@ function findComponentByTokenGraph($finalTokenId, $componentCode) {
    - Component master data
    - BOM integration
 
-10. **Add `flow_token.component_code` field**
-    - Move from metadata JSON to dedicated field
+10. **(Already done) `flow_token.component_code` field exists**
+    - Treat as SSOT (do not use metadata.component_code as SSOT)
 
 11. **Implement `job_tray` table**
     - Physical tray mapping
@@ -1185,7 +1224,8 @@ routing_node:
 ```
 Merge Node (id=20)
   - is_merge_node: 1
-  - merge_mode: 'ALL'
+  - parallel_merge_policy: 'ALL'  (SSOT)
+  - merge_mode: 'ALL'             (legacy/compat)
   - consumes_components: '["BODY","FLAP","STRAP"]'
   - Incoming edges: 3 (from BODY, FLAP, STRAP branches)
 ```
@@ -1397,7 +1437,7 @@ function validateMergeReadiness($finalTokenId, $mergeNodeId) {
     $requiredComponents = json_decode($node['consumes_components'], true);
     
     $completedComponents = db_query("
-        SELECT metadata->>'$.component_code' AS component_code
+        SELECT component_code
         FROM flow_token
         WHERE parent_token_id = ?
           AND token_type = 'component'
